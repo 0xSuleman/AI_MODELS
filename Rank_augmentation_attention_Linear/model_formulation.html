@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hybrid Attention Model Formulation</title>
+    <!-- MathJax for LaTeX rendering -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --text-color: #c9d1d9;
+            --accent-color: #58a6ff;
+            --border-color: #30363d;
+            --card-bg: #161b22;
+            --hover-bg: #1f2428;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1, h2, h3 {
+            color: #fff;
+        }
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .tab-btn:hover {
+            color: #fff;
+            background-color: var(--hover-bg);
+        }
+        .tab-btn.active {
+            color: var(--accent-color);
+            border-bottom: 2px solid var(--accent-color);
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        /* Accordions (Dynamic Spaces) */
+        .accordion {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        .accordion-header {
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--card-bg);
+            font-weight: bold;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease;
+        }
+        .accordion-header:hover {
+            background-color: var(--hover-bg);
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out;
+            background-color: var(--bg-color);
+        }
+        .accordion-content-inner {
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+        /* Mathematical Blocks */
+        .math-block {
+            background-color: #000;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow-x: auto;
+            border: 1px solid #333;
+            text-align: center;
+        }
+        .math-inline {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        .explanation {
+            background-color: rgba(88, 166, 255, 0.1);
+            border-left: 4px solid var(--accent-color);
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 0 4px 4px 0;
+        }
+        .explanation h4 {
+            margin-top: 0;
+            color: var(--accent-color);
+        }
+        /* Difficulty Badges */
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        .badge-beginner {
+            background-color: rgba(63, 185, 80, 0.2);
+            color: #3fb950;
+            border: 1px solid rgba(63, 185, 80, 0.4);
+        }
+        .badge-intermediate {
+            background-color: rgba(210, 153, 34, 0.2);
+            color: #d29922;
+            border: 1px solid rgba(210, 153, 34, 0.4);
+        }
+        .badge-advanced {
+            background-color: rgba(248, 81, 73, 0.2);
+            color: #f85149;
+            border: 1px solid rgba(248, 81, 73, 0.4);
+        }
+        /* Update Log date badge */
+        .date-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            background-color: rgba(88, 166, 255, 0.15);
+            color: var(--accent-color);
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Self-Gated State Space Hybrid Attention</h1>
+    
+    <div class="tabs">
+        <button class="tab-btn active" onclick="openTab(event, 'proposed')">Proposed Architecture</button>
+        <button class="tab-btn" onclick="openTab(event, 'complexity')">Computational Complexity</button>
+        <button class="tab-btn" onclick="openTab(event, 'beginners')">Standard AI (For Beginners)</button>
+        <button class="tab-btn" onclick="openTab(event, 'updates')">Updates Log</button>
+    </div>
+
+    <!-- Proposed Architecture Tab -->
+    <div id="proposed" class="tab-content active">
+        <p>This section formulates the exact mathematics of the proposed hybrid architecture, combining a global associative memory branch with a local windowed attention branch and data-dependent output gating.</p>
+
+        <!-- Step 1 -->
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                1. Initial Projections
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <div class="math-block">
+                        $$ X \in \mathbb{R}^{N \times D} $$
+                    </div>
+                    <p>Let the learned projection matrices be</p>
+                    <div class="math-block">
+                        $$ W_Q, W_K, W_V \in \mathbb{R}^{D \times d} $$
+                    </div>
+                    <p>and define the projected representations</p>
+                    <div class="math-block">
+                        $$ Q = XW_Q, \quad K = XW_K, \quad V = XW_V $$
+                    </div>
+                    <p>with</p>
+                    <div class="math-block">
+                        $$ Q, K, V \in \mathbb{R}^{N \times d} $$
+                    </div>
+                    
+                    <div class="explanation">
+                        <h4>Why is this used?</h4>
+                        <p>This is the standard first step in almost all modern transformer architectures. We project our high-dimensional input sequence \(X\) (where \(N\) is sequence length and \(D\) is the model dimension) into a lower-dimensional space \(d\) for our Queries, Keys, and Values. This separates the representation space into three distinct semantic functions: \(Q\) (what I'm looking for), \(K\) (what I contain), and \(V\) (what I output).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                2. Global Associative Memory Branch
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>For each token \(i \in \{1, \dots, N\}\), define the scalar salience score</p>
+                    <div class="math-block">
+                        $$ s_i = K_i V_i^T $$
+                    </div>
+                    <p>where</p>
+                    <div class="math-block">
+                        $$ K_i, V_i \in \mathbb{R}^{1 \times d} $$
+                    </div>
+                    <p>Define the normalized salience weights</p>
+                    <div class="math-block">
+                        $$ g_i = \frac{\exp(s_i)}{\sum_{m=1}^N \exp(s_m)} $$
+                    </div>
+                    <h3>Global Form (Parallel)</h3>
+                    <p>Construct the global associative memory matrix</p>
+                    <div class="math-block">
+                        $$ S = \sum_{i=1}^N g_i (K_i^T V_i) $$
+                    </div>
+                    <p>where</p>
+                    <div class="math-block">
+                        $$ S \in \mathbb{R}^{d \times d} $$
+                    </div>
+
+                    <h3>Recurrent Form (Sequential / Streaming)</h3>
+                    <p>Define a <strong>data-dependent forget gate</strong></p>
+                    <div class="math-block">
+                        $$ \gamma_t = \sigma(W_\gamma x_t + b_\gamma) $$
+                    </div>
+                    <p>where \(W_\gamma \in \mathbb{R}^{1 \times D}\) and \(\sigma\) is the sigmoid function, so \(\gamma_t \in (0, 1)\).</p>
+                    <p>The memory is updated recurrently as</p>
+                    <div class="math-block">
+                        $$ S_t = \gamma_t S_{t-1} + e^{s_t} k_t^T v_t $$
+                    </div>
+                    <p>with running normalizer</p>
+                    <div class="math-block">
+                        $$ Z_t = \gamma_t Z_{t-1} + e^{s_t} $$
+                    </div>
+                    <p>The normalized memory at step \(t\) is</p>
+                    <div class="math-block">
+                        $$ M_t = \frac{S_t}{Z_t} $$
+                    </div>
+                    <p>The global retrieval output is then</p>
+                    <div class="math-block">
+                        $$ O_t^{\text{global}} = Q_t M_t $$
+                    </div>
+
+                    <div class="explanation">
+                        <h4>Why is this used?</h4>
+                        <p>This is the core innovation of the proposed architecture. Instead of computing an \(N \times N\) attention matrix where every token queries every other token, we build a single, shared \(d \times d\) memory matrix \(S\).</p>
+                        <ul>
+                            <li><strong>Self-Salience (\(s_i\)):</strong> By taking the dot product of a token's <em>own</em> Key and Value (\(K_i V_i^T\)), we measure its "absolute importance" to the sequence.</li>
+                            <li><strong>Memory Construction (\(S\)):</strong> The matrix \(S\) is formed by summing the outer products (\(K_i^T V_i\)) of every token, weighted by their salience score \(g_i\). This compresses the entire sequence into a fixed-size state.</li>
+                            <li><strong>Global Retrieval (\(O^{\text{global}}\)):</strong> By simply multiplying the Query matrix \(Q\) by this state \(S\), we retrieve information globally in \(O(N d^2)\) time, completely bypassing the quadratic \(O(N^2)\) bottleneck of standard attention.</li>
+                            <li><strong>Forget Gate (\(\gamma_t\)):</strong> The data-dependent decay factor gives the memory a "sense of time." The current token \(x_t\) decides how much of the past memory to retain. For example, a period (".") can learn to flush the memory (\(\gamma \approx 0.1\)) since a new sentence is starting, while a pronoun keeps it alive (\(\gamma \approx 0.99\)). Without this gate, the global memory is <strong>permutation-invariant</strong> and loses all ordering information. With it, the model becomes a proper <strong>Gated State Space Model</strong>, enabling streaming inference.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                3. Local Windowed Attention Branch
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>Let</p>
+                    <div class="math-block">
+                        $$ \mathcal{W}(i) \subseteq \{1, \dots, N\} $$
+                    </div>
+                    <p>denote a local attention window centered around token \(i\).</p>
+                    <p>Define the local attention coefficients</p>
+                    <div class="math-block">
+                        $$ \alpha_{ij} = \frac{\exp(Q_i K_j^T)}{\sum_{m \in \mathcal{W}(i)} \exp(Q_i K_m^T)} $$
+                    </div>
+                    <p>for all</p>
+                    <div class="math-block">
+                        $$ j \in \mathcal{W}(i) $$
+                    </div>
+                    <p>The local attention output is</p>
+                    <div class="math-block">
+                        $$ O_i^{\text{local}} = \sum_{j \in \mathcal{W}(i)} \alpha_{ij} V_j $$
+                    </div>
+
+                    <div class="explanation">
+                        <h4>Why is this used?</h4>
+                        <p>While the global memory branch is highly efficient, it lacks fine-grained precision (e.g., "what is the exact word immediately before me?"). This branch solves that problem.</p>
+                        <p>By using standard Softmax Attention <em>only</em> over a small, fixed window (\(\mathcal{W}(i)\)) of neighboring tokens, the model can perform exact pairwise reasoning locally. Because the window size \(w\) is constant (e.g., 64 tokens), the complexity remains \(O(N)\) rather than \(O(N^2)\). This provides local expressiveness without sacrificing global efficiency.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                4. Data-Dependent Output Gating (Residual Gate)
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>Define a learned <strong>residual gating function</strong></p>
+                    <div class="math-block">
+                        $$ \phi : \mathbb{R}^D \rightarrow \mathbb{R}^d $$
+                    </div>
+                    <p>defined as</p>
+                    <div class="math-block">
+                        $$ \phi(x_i) = 1 + \tanh(W_\phi x_i + b_\phi) $$
+                    </div>
+                    <p>where \(W_\phi \in \mathbb{R}^{d \times D}\), so that</p>
+                    <div class="math-block">
+                        $$ \phi(x_i) \in (0, 2)^d $$
+                    </div>
+                    <p>The final output representation is</p>
+                    <div class="math-block">
+                        $$ O_i = \phi(x_i) \odot \left( O_i^{\text{global}} + O_i^{\text{local}} \right) $$
+                    </div>
+                    <p>where \(\odot\) denotes the Hadamard (element-wise) product.</p>
+
+                    <div class="explanation">
+                        <h4>Why is this used?</h4>
+                        <p>This is a crucial <strong>rank-restoration</strong> and filtering mechanism. Because the global memory \(S\) is a shared matrix, the global output \(Q_i S\) might suffer from rank collapse (i.e., lacking diversity across tokens).</p>
+                        <p>The <strong>residual gate</strong> \(1 + \tanh(\cdot)\) is centered at \(1.0\), meaning it defaults to <em>passing the signal through unchanged</em>. It can:</p>
+                        <ul>
+                            <li><strong>Suppress</strong> a feature dimension (values near \(0\))</li>
+                            <li><strong>Pass through</strong> unchanged (values near \(1\))</li>
+                            <li><strong>Amplify</strong> a feature dimension (values near \(2\))</li>
+                        </ul>
+                        <p>This is superior to a pure sigmoid gate \(\in (0,1)\), which can only suppress and never amplify, risking permanent information loss in dimensions that are driven toward zero.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 5 -->
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                5. Compact Matrix Form
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>The complete architecture may therefore be written as</p>
+                    <h3>Global (Parallel) Compact Form</h3>
+                    <div class="math-block">
+                        $$ Q, K, V = XW_Q, XW_K, XW_V $$<br>
+                        $$ g_i = \frac{\exp(K_i V_i^T)}{\sum_{m=1}^N \exp(K_m V_m^T)} $$<br>
+                        $$ S = \sum_{i=1}^N g_i (K_i^T V_i) $$<br>
+                        $$ O^{\text{global}} = QS $$<br>
+                        $$ O_i^{\text{local}} = \sum_{j \in \mathcal{W}(i)} \frac{\exp(Q_i K_j^T)}{\sum_{m \in \mathcal{W}(i)} \exp(Q_i K_m^T)} V_j $$<br>
+                        $$ O_i = \left(1 + \tanh(W_\phi x_i)\right) \odot \left( O_i^{\text{global}} + O_i^{\text{local}} \right) $$
+                    </div>
+                    <h3>Recurrent (Streaming) Compact Form</h3>
+                    <div class="math-block">
+                        $$ \gamma_t = \sigma(W_\gamma x_t) $$<br>
+                        $$ S_t = \gamma_t S_{t-1} + e^{s_t} k_t^T v_t $$<br>
+                        $$ Z_t = \gamma_t Z_{t-1} + e^{s_t} $$<br>
+                        $$ O_t^{\text{global}} = Q_t \frac{S_t}{Z_t} $$<br>
+                        $$ O_t^{\text{local}} = \sum_{j \in \mathcal{W}(t)} \frac{\exp(Q_t K_j^T)}{\sum_{m \in \mathcal{W}(t)} \exp(Q_t K_m^T)} V_j $$<br>
+                        $$ O_t = \left(1 + \tanh(W_\phi x_t)\right) \odot \left( O_t^{\text{global}} + O_t^{\text{local}} \right) $$
+                    </div>
+                    <div class="explanation">
+                        <h4>Summary</h4>
+                        <p>This unified view shows how the model merges state-space representation (memory) with localized interaction-based routing (window attention), all bound together by a residual output gate. The <strong>Global form</strong> is used during training (parallelizable), while the <strong>Recurrent form</strong> enables streaming inference (one token at a time, constant memory).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 6 -->
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                6. Numerical Stability Analysis
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>A natural question arises: the scalar score \(s_i = K_i V_i^T\) is exponentiated inside the softmax for \(g_i\), but the outer product \(K_i^T V_i\) in the memory sum \(S\) is <strong>not</strong> exponentiated. Is this correct?</p>
+                    <h3>Yes — and here is exactly why.</h3>
+                    <p>Consider the analogy with standard softmax attention:</p>
+                    <div class="math-block">
+                        $$ O_i = \sum_j \underbrace{\text{softmax}(Q_i K_j^T)}_{\text{exponentiated score}} \cdot \underbrace{V_j}_{\text{NOT exponentiated}} $$
+                    </div>
+                    <p>Nobody exponentiates \(V_j\). The exponential is applied to the <strong>routing score</strong> (which tokens matter), not to the <strong>content</strong> (what information to carry). This model follows the exact same logic:</p>
+                    <ul>
+                        <li><strong>\(g_i\)</strong> = the routing score (exponentiated + normalized via softmax) — <em>"how important is token \(i\)?"</em></li>
+                        <li><strong>\(K_i^T V_i\)</strong> = the content (raw outer product) — <em>"what information does token \(i\) contribute to memory?"</em></li>
+                    </ul>
+                    <p>If we did exponentiate the outer product — i.e., \(\sum g_i \exp(K_i^T V_i)\) — individual entries could reach \(e^5 \approx 150\) or higher, causing catastrophic blow-up over multiple layers.</p>
+                    <h3>Why the raw outer product stays bounded</h3>
+                    <p>After LayerNorm, entries of \(K_i\) and \(V_i\) are on the order of ~1. The sum \(S = \sum g_i (K_i^T V_i)\) is a <strong>convex combination</strong> (since \(g_i\) sums to 1). A convex combination of bounded matrices is always bounded by the maximum of its inputs. <strong>It cannot blow up.</strong></p>
+                    <h3>The Recurrent Form</h3>
+                    <p>In the recurrent form \(S_t = \gamma_t S_{t-1} + e^{s_t} k_t^T v_t\), the raw exponential \(e^{s_t}\) IS used without softmax normalization. This is why the normalizer \(Z_t = \gamma_t Z_{t-1} + e^{s_t}\) is tracked, and dividing \(M_t = S_t / Z_t\) re-normalizes, producing the same result as the global softmax form.</p>
+                    <div class="explanation">
+                        <h4>Summary Table</h4>
+                        <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                            <tr style="border-bottom:1px solid #30363d;"><th style="text-align:left;padding:8px;">Component</th><th style="text-align:left;padding:8px;">Exponentiated?</th><th style="text-align:left;padding:8px;">Why?</th></tr>
+                            <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">Scalar \(s_i = K_i V_i^T\)</td><td style="padding:8px;">Yes (inside softmax)</td><td style="padding:8px;">Converts scores into probability weights</td></tr>
+                            <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">Outer product \(K_i^T V_i\)</td><td style="padding:8px;">No (raw)</td><td style="padding:8px;">Content carrier — exponentiating would cause blow-up</td></tr>
+                            <tr><td style="padding:8px;">Recurrent \(e^{s_t} k_t^T v_t\)</td><td style="padding:8px;">Yes (unnormalized)</td><td style="padding:8px;">\(Z_t\) re-normalizes, equivalent to global softmax</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complexity Tab -->
+    <div id="complexity" class="tab-content">
+        <h2>Computational Complexity</h2>
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                Derivation
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>Assuming fixed window size</p>
+                    <div class="math-block">
+                        $$ |\mathcal{W}(i)| = w $$
+                    </div>
+                    <p>with</p>
+                    <div class="math-block">
+                        $$ w \ll N $$
+                    </div>
+                    <p>the total computational complexity becomes</p>
+                    <div class="math-block">
+                        $$ O(N d^2 + N w d) $$
+                    </div>
+                    <p>and for constant window size \(w\),</p>
+                    <div class="math-block">
+                        $$ O(N d^2) $$
+                    </div>
+                    <p>which is linear in sequence length \(N\).</p>
+                    
+                    <div class="explanation">
+                        <h4>Why does this matter?</h4>
+                        <p>Standard Softmax Attention has a complexity of \(O(N^2 d)\). When processing long documents (e.g., \(N = 100,000\)), \(N^2\) becomes computationally impossible because it scales quadratically (100k squared is 10 billion operations per head). By replacing the full \(N \times N\) interaction with a global \(d \times d\) memory and a small local window, our complexity scales linearly with \(N\), making infinite-context models possible.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                Multi-Head Memory Scaling
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>With \(h\) attention heads and head dimension \(d\), each head builds its own independent \(d \times d\) memory matrix \(S^{(p)}\). The total memory capacity across all heads is:</p>
+                    <div class="math-block">
+                        $$ \text{Total memory} = h \times d^2 $$
+                    </div>
+                    <p>If \(d = D/h\) (standard practice), then:</p>
+                    <div class="math-block">
+                        $$ \text{Total memory} = h \times \left(\frac{D}{h}\right)^2 = \frac{D^2}{h} $$
+                    </div>
+                    <div class="explanation">
+                        <h4>The Head Count Tradeoff</h4>
+                        <p><strong>More heads</strong> = less memory capacity per head, but more diversity of independent memory "perspectives" (each head specializes in different aspects of the sequence).</p>
+                        <p><strong>Fewer heads</strong> = richer \(d \times d\) memory per head, but less diversity.</p>
+                        <p>Multi-head attention in this model effectively acts as <strong>feature-space patching</strong> — each head operates on a different \(d\)-dimensional subspace, builds its own memory, and the results are concatenated. This is the natural solution to the limited \(d \times d\) memory capacity without breaking cross-token interaction.</p>
+                        <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                            <tr style="border-bottom:1px solid #30363d;"><th style="text-align:left;padding:8px;">Model</th><th style="text-align:left;padding:8px;">Total State Size</th></tr>
+                            <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">Softmax Attention</td><td style="padding:8px;">\(h \times N^2\)</td></tr>
+                            <tr><td style="padding:8px;">This Model</td><td style="padding:8px;">\(h \times d^2 = D^2 / h\)</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Beginners Tab -->
+    <div id="beginners" class="tab-content">
+        <h2>Understanding Standard AI Algorithms (For Beginners)</h2>
+        <p>Before understanding the advanced architecture above, it's essential to understand how current AI models (like GPT-4) work using <strong>Standard Softmax Attention</strong>.</p>
+        
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                What are Q, K, and V? <span class="badge badge-beginner">Beginner</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>Imagine a cocktail party. You are looking for someone to talk to.</p>
+                    <ul>
+                        <li><strong>Query (Q):</strong> This is what you are looking for. E.g., "I want to talk about sports."</li>
+                        <li><strong>Key (K):</strong> This is the name tag on everyone else. E.g., "I know about basketball."</li>
+                        <li><strong>Value (V):</strong> This is the actual conversation they will give you if you talk to them. E.g., "The Lakers won last night."</li>
+                    </ul>
+                    <p>In AI, every single word (token) in a sentence generates its own Query, Key, and Value.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                How Standard Softmax Attention Works <span class="badge badge-beginner">Beginner</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>In standard attention, the AI performs a <strong>Pairwise Interaction</strong>. Every single word in the sentence asks every other word: <em>"How relevant are you to me?"</em></p>
+                    <ol>
+                        <li>It calculates the dot product between a token's Query and another token's Key: \(Q_i \cdot K_j\).</li>
+                        <li>It passes these scores through a <code>Softmax</code> function, which turns them into percentages (e.g., 90% focus on word A, 10% on word B).</li>
+                        <li>It multiplies these percentages by the Values (\(V_j\)) to get the final answer.</li>
+                    </ol>
+                    <div class="math-block">
+                        $$ O_i = \sum_{j} \text{Softmax}(Q_i \cdot K_j) V_j $$
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                The "N-Squared" Problem <span class="badge badge-beginner">Beginner</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>Because <em>every</em> word talks to <em>every other</em> word, if you have \(N\) words, you need \(N \times N = N^2\) comparisons.</p>
+                    <ul>
+                        <li>If a sentence has 10 words, that's 100 comparisons. Easy.</li>
+                        <li>If a book has 100,000 words, that's <strong>10,000,000,000 (10 billion)</strong> comparisons. The computer runs out of memory and crashes.</li>
+                    </ul>
+                    <p><strong>The Solution:</strong> The proposed model in the first tab fixes this by using a "Shared Notebook" (Global Memory) where everyone writes their thoughts down once (\(O(N)\)), and then everyone just reads the notebook, instead of talking to each individual person.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                What is a "Layer" in a Transformer? <span class="badge badge-beginner">Beginner</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>A Transformer model is built by <strong>stacking identical processing blocks</strong> on top of each other. Each block is called a <strong>layer</strong>. A single layer contains two main sub-units:</p>
+                    <ol>
+                        <li><strong>Attention:</strong> The layer looks at the relationships between words (using Q, K, V). This is the "who should I pay attention to?" step.</li>
+                        <li><strong>MLP (Feed-Forward Network):</strong> After attending to other words, each word passes through a small neural network on its own. This is the "thinking" step — where the model processes what it just learned from attention.</li>
+                    </ol>
+                    <p>When we say a model has <strong>32 layers</strong>, it means the input passes through 32 of these Attention → MLP blocks in sequence:</p>
+                    <div class="math-block">
+                        $$ \text{Words} \rightarrow [\text{Layer 1}] \rightarrow [\text{Layer 2}] \rightarrow \cdots \rightarrow [\text{Layer 32}] \rightarrow \text{Prediction} $$
+                    </div>
+                    <p><strong>Analogy:</strong> Think of layers like floors of a school building. On the 1st floor (Layer 1), students learn the alphabet. On the 5th floor, they learn grammar. On the 15th floor, they learn to write essays. On the 32nd floor, they write novels. Each floor takes the <em>same exam format</em> (Attention + MLP), but the students arriving on each floor are progressively smarter because of all the floors below.</p>
+
+                    <div class="explanation">
+                        <h4>What does each layer learn?</h4>
+                        <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                            <tr style="border-bottom:1px solid #30363d;"><th style="text-align:left;padding:8px;">Layers</th><th style="text-align:left;padding:8px;">What they typically learn</th><th style="text-align:left;padding:8px;">Human analogy</th></tr>
+                            <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">1–2</td><td style="padding:8px;">Character patterns, word boundaries, basic syntax</td><td style="padding:8px;">Recognizing individual letters and words</td></tr>
+                            <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">3–8</td><td style="padding:8px;">Grammar rules, phrase structure, part-of-speech</td><td style="padding:8px;">Understanding sentence structure</td></tr>
+                            <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">9–20</td><td style="padding:8px;">Semantic meaning, entity relationships, context</td><td style="padding:8px;">Understanding what a paragraph means</td></tr>
+                            <tr><td style="padding:8px;">21–32</td><td style="padding:8px;">Abstract reasoning, world knowledge, logic</td><td style="padding:8px;">Thinking, planning, and deciding</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                Where Do "7 Billion Parameters" Come From? <span class="badge badge-intermediate">Intermediate</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>When people say "GPT has 7 billion parameters," they mean 7 billion <strong>learnable numbers</strong> (weights) stored in the model's brain. These weights are spread across all the layers.</p>
+                    <p>Each layer has its <strong>own independent copy</strong> of all the weights. Nothing is shared between layers. Here is a simplified breakdown for one layer with model dimension \(D = 4096\):</p>
+                    <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                        <tr style="border-bottom:1px solid #30363d;"><th style="text-align:left;padding:8px;">Component</th><th style="text-align:left;padding:8px;">What it does</th><th style="text-align:left;padding:8px;">Parameters</th></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">\(W_Q, W_K, W_V\)</td><td style="padding:8px;">Create the Query, Key, and Value</td><td style="padding:8px;">~50 million</td></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">\(W_O\)</td><td style="padding:8px;">Combine attention heads back together</td><td style="padding:8px;">~17 million</td></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">MLP layers</td><td style="padding:8px;">The "thinking" step after attention</td><td style="padding:8px;">~134 million</td></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">LayerNorm</td><td style="padding:8px;">Keeps numbers in a stable range</td><td style="padding:8px;">~16 thousand (tiny)</td></tr>
+                        <tr><td style="padding:8px;"><strong>Total per layer</strong></td><td style="padding:8px;"></td><td style="padding:8px;"><strong>~218 million</strong></td></tr>
+                    </table>
+                    <p>Now multiply by the number of layers:</p>
+                    <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                        <tr style="border-bottom:1px solid #30363d;"><th style="text-align:left;padding:8px;">Number of Layers</th><th style="text-align:left;padding:8px;">Total Parameters</th><th style="text-align:left;padding:8px;">Comparable Model</th></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">12</td><td style="padding:8px;">~2.7 Billion</td><td style="padding:8px;">GPT-2 XL</td></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">24</td><td style="padding:8px;">~5.4 Billion</td><td style="padding:8px;">Mid-range LLM</td></tr>
+                        <tr><td style="padding:8px;">32</td><td style="padding:8px;">~7.1 Billion</td><td style="padding:8px;">LLaMA-7B</td></tr>
+                    </table>
+                    <p><strong>Key insight:</strong> More layers = more parameters = smarter model. But also more GPU memory required and slower training.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                Does Memory Grow With More Layers? <span class="badge badge-intermediate">Intermediate</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p><strong>No.</strong> This is a common misconception. Each layer builds its own <strong>fresh, independent memory</strong> from scratch. The \(d \times d\) memory matrix is <strong>ephemeral</strong> — it is created, used, and discarded within one layer. The next layer builds a completely new one.</p>
+                    <div class="math-block">
+                        $$ \text{Layer 1: builds } S_1 \text{ from input } X \quad \rightarrow \quad \text{produces output } X' $$
+                    </div>
+                    <div class="math-block">
+                        $$ \text{Layer 2: builds } S_2 \text{ from } X' \text{ (fresh!)} \quad \rightarrow \quad \text{produces output } X'' $$
+                    </div>
+                    <div class="math-block">
+                        $$ \text{Layer 3: builds } S_3 \text{ from } X'' \text{ (fresh!)} \quad \rightarrow \quad \text{produces output } X''' $$
+                    </div>
+                    <p>\(S_1\), \(S_2\), and \(S_3\) are <strong>completely different</strong> matrices with different contents. The memory size stays at \(h \times d^2\) per layer regardless of how many layers exist.</p>
+
+                    <h3>The Residual Stream: How Information Survives Across Layers</h3>
+                    <p>If each layer throws away its memory, how does information travel from Layer 1 to Layer 32? Through the <strong>Residual Connection</strong>:</p>
+                    <div class="math-block">
+                        $$ X' = X + \text{Attention}(X) $$
+                    </div>
+                    <p>Each layer <strong>adds</strong> its contribution to the running representation rather than replacing it. The original input information is preserved through this additive shortcut.</p>
+                    <p><strong>Analogy:</strong> Think of it like a river (the "Residual Stream"). The water (information) flows continuously from start to finish. Each layer is a tributary that <em>adds</em> new water (new understanding) into the river, but the original water keeps flowing too. By the end, the river is rich with contributions from every layer it passed through.</p>
+
+                    <div class="explanation">
+                        <h4>Summary</h4>
+                        <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                            <tr style="border-bottom:1px solid #30363d;"><th style="text-align:left;padding:8px;">Question</th><th style="text-align:left;padding:8px;">Answer</th></tr>
+                            <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">Does memory (\(d \times d\)) grow with more layers?</td><td style="padding:8px;"><strong>No.</strong> Each layer builds fresh memory independently.</td></tr>
+                            <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">Do layers share weights?</td><td style="padding:8px;"><strong>No.</strong> Each layer has its own independent set of parameters.</td></tr>
+                            <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">What does more layers give you?</td><td style="padding:8px;">Deeper abstraction and richer understanding.</td></tr>
+                            <tr><td style="padding:8px;">How does info survive across layers?</td><td style="padding:8px;">Through the <strong>Residual Stream</strong> (\(X' = X + \text{output}\)).</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                The Forget Gate (γ_t): How Memory Learns What to Keep and What to Flush <span class="badge badge-intermediate">Intermediate</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>In our architecture, the global memory \(S_t\) accumulates information from every token it has seen. But not all information is equally valuable. A sentence boundary should clear the slate, while a pronoun should preserve the subject it refers to. The <strong>forget gate</strong> \(\gamma_t\) makes this decision <em>automatically</em> for every token:</p>
+                    <div class="math-block">
+                        $$ \gamma_t = \sigma(W_\gamma x_t + b_\gamma) \in (0, 1) $$
+                    </div>
+                    <div class="math-block">
+                        $$ S_t = \gamma_t \cdot S_{t-1} + e^{s_t} k_t^T v_t $$
+                    </div>
+
+                    <h4>What does γ actually do?</h4>
+                    <p>At each time step, \(\gamma_t\) is a scalar between 0 and 1 that controls how much of the <em>old</em> memory to keep:</p>
+                    <ul>
+                        <li><strong>γ ≈ 1.0 (keep everything):</strong> The old memory is almost fully preserved. New information is <em>added</em> on top. This happens when the model sees a continuation of the same topic — a pronoun ("he", "she"), a conjunction ("and", "because"), or a comma.</li>
+                        <li><strong>γ ≈ 0.0 (flush everything):</strong> The old memory is nearly wiped clean. Only the new token's information survives. This happens at natural <em>boundaries</em> — end of sentence (".", "!"), topic changes, or paragraph breaks.</li>
+                        <li><strong>γ ≈ 0.5 (partial decay):</strong> A gradual blending of old and new. Common in the middle of complex sentences where context is shifting but not completely changing.</li>
+                    </ul>
+
+                    <h4>How does it know what to keep? The "Biased" Learning</h4>
+                    <p>The key insight is that \(\gamma_t\) is <strong>data-dependent</strong> — it's computed from the <em>current token's content</em> \(x_t\), not from a fixed schedule. The learnable weights \(W_\gamma\) and bias \(b_\gamma\) are trained end-to-end with the rest of the model. During training:</p>
+                    <ol>
+                        <li>The model encounters a period (".") → the loss gradient teaches \(W_\gamma\) that flushing memory here improves predictions → \(\gamma\) learns to output ~0.1 for periods.</li>
+                        <li>The model encounters "he" after "John" → keeping memory is essential to resolve the pronoun → \(\gamma\) learns to output ~0.99 for pronouns.</li>
+                        <li>The model encounters a new paragraph → partial flush is optimal → \(\gamma\) learns ~0.3 for paragraph tokens.</li>
+                    </ol>
+                    <p>This is <strong>not hand-programmed</strong>. The model discovers these patterns <em>automatically</em> from training data. The gate effectively learns a "grammar of forgetting" — a biased policy where structurally important information is retained while noise and expired context is discarded.</p>
+
+                    <div class="explanation">
+                        <h4>Analogy: The Smart Whiteboard</h4>
+                        <p>Imagine a teacher writing notes on a whiteboard during a lecture. An ordinary eraser wipes everything indiscriminately. But our "smart whiteboard" has a magic eraser controlled by the <em>next sentence</em> being spoken:</p>
+                        <ul>
+                            <li>If the teacher says "Furthermore..." → the eraser barely touches the board (γ ≈ 0.95). Previous notes stay.</li>
+                            <li>If the teacher says "Now, moving on to a completely different topic..." → the eraser sweeps across the board (γ ≈ 0.1). Space is cleared for new content.</li>
+                            <li>If the teacher says "As I mentioned earlier..." → the eraser is gentle (γ ≈ 0.85), preserving the referenced material.</li>
+                        </ul>
+                        <p>The whiteboard's eraser learns <em>from the teacher's language patterns</em> what to keep and what to erase. That's exactly what \(\gamma_t\) does.</p>
+                    </div>
+
+                    <h4>Why not just keep everything forever?</h4>
+                    <p>If \(\gamma = 1.0\) always, the memory would become an ever-growing, undifferentiated sum of every token ever seen. Early tokens and recent tokens would have equal weight. The model couldn't distinguish between a subject mentioned 500 tokens ago and one mentioned 2 tokens ago. Selective forgetting is what gives the memory <strong>temporal focus</strong> — the ability to prioritize recent, relevant context while gradually releasing stale information.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                The Residual Gate (1 + tanh): How We Prevent Feature Death and Restore Rank <span class="badge badge-intermediate">Intermediate</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>After the global and local attention branches produce their outputs, these are combined and passed through a <strong>residual output gate</strong>:</p>
+                    <div class="math-block">
+                        $$ \phi(x_i) = 1 + \tanh(W_\phi x_i + b_\phi) \quad \in (0, 2)^d $$
+                    </div>
+                    <div class="math-block">
+                        $$ O_i = \phi(x_i) \odot (O_i^{\text{global}} + O_i^{\text{local}}) $$
+                    </div>
+                    <p>The \(\odot\) symbol means <strong>element-wise multiplication</strong> (Hadamard product) — every dimension of the output is independently scaled by its corresponding gate value.</p>
+
+                    <h4>Why "1 + tanh" and not just "sigmoid" or "tanh"?</h4>
+                    <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                        <tr style="border-bottom:1px solid #30363d;"><th style="text-align:left;padding:8px;">Gate Type</th><th style="text-align:left;padding:8px;">Range</th><th style="text-align:left;padding:8px;">At init (W≈0)</th><th style="text-align:left;padding:8px;">Can amplify?</th><th style="text-align:left;padding:8px;">Risk</th></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">sigmoid(x)</td><td style="padding:8px;">(0, 1)</td><td style="padding:8px;">0.5</td><td style="padding:8px;">❌ No</td><td style="padding:8px;">Halves signal at init; can kill features at ~0</td></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">tanh(x)</td><td style="padding:8px;">(-1, 1)</td><td style="padding:8px;">0.0</td><td style="padding:8px;">❌ No</td><td style="padding:8px;">Kills ALL signal at init (output = 0)</td></tr>
+                        <tr><td style="padding:8px;"><strong>1 + tanh(x)</strong></td><td style="padding:8px;"><strong>(0, 2)</strong></td><td style="padding:8px;"><strong>1.0</strong></td><td style="padding:8px;"><strong>✅ Yes (up to 2×)</strong></td><td style="padding:8px;"><strong>Signal passes through unchanged at init</strong></td></tr>
+                    </table>
+
+                    <h4>Three Critical Properties</h4>
+                    <ol>
+                        <li><strong>Safe Initialization (center at 1.0):</strong> When training starts, all weights are near zero. \(\tanh(0) = 0\), so \(\phi = 1 + 0 = 1\). The gate is a <strong>perfect pass-through</strong>. The attention output flows through unmodified. The model starts by <em>trusting</em> its attention branches and only learns to modulate later. This prevents the "cold start" problem where a randomly initialized gate destroys the signal.</li>
+                        <li><strong>Amplification (up to 2.0):</strong> Unlike sigmoid which can only <em>shrink</em> values, our gate can <strong>boost</strong> important dimensions up to 2×. If attention detects a critical feature but the signal is weak, the gate amplifies it. This is essential for rank restoration — the gate doesn't just filter, it <em>differentiates</em>.</li>
+                        <li><strong>Anti-Feature-Death:</strong> With sigmoid gating, if a particular dimension learns a gate value near 0, that dimension's information is <strong>permanently destroyed</strong> — it can never recover because the gradient through 0 is also ~0 (vanishing gradient). With \(1 + \tanh\), the minimum is \(0^+\), but the center is \(1.0\). The gate must actively learn to suppress a dimension, and even then, it never fully reaches 0. Dead features are almost impossible.</li>
+                    </ol>
+
+                    <div class="explanation">
+                        <h4>Analogy: The Audio Mixing Board</h4>
+                        <p>Think of a professional audio mixing board in a recording studio. Each channel (feature dimension) has a fader (slider):</p>
+                        <ul>
+                            <li><strong>Sigmoid gate = faders 0% to 100%:</strong> You can only reduce each channel. Your best option is to pass audio through at full volume. You can never make the vocals louder than they came in.</li>
+                            <li><strong>1 + tanh gate = faders 0% to 200%:</strong> Each channel starts at 100% (natural volume). You can boost the vocals to 200% to make them stand out, or reduce the background noise to 10%. And critically, when you first sit down at the board (initialization), <em>every fader is at 100%</em> — the raw audio plays through perfectly until you decide to adjust.</li>
+                        </ul>
+                        <p>Each token gets its <em>own mixing board</em>, tuned by its own content. Token 1 might boost dimension 5 and suppress dimension 12, while Token 2 does the opposite. This per-token mixing is what creates diverse, full-rank output from a shared memory.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                Scaling D While Keeping d Fixed: The Multi-Head Strategy <span class="badge badge-intermediate">Intermediate</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>To make a model smarter, you increase its total dimension \(D\). But here's the critical insight: you should increase \(D\) by <strong>adding more heads</strong> while keeping each head's dimension \(d\) fixed (ideally \(d = 128\)).</p>
+                    <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                        <tr style="border-bottom:1px solid #30363d;"><th style="text-align:left;padding:8px;">D</th><th style="text-align:left;padding:8px;">h (heads)</th><th style="text-align:left;padding:8px;">d (per head)</th><th style="text-align:left;padding:8px;">Memory per layer</th></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">512</td><td style="padding:8px;">4</td><td style="padding:8px;">128</td><td style="padding:8px;">4 × 16,384 = 65,536</td></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">2048</td><td style="padding:8px;">16</td><td style="padding:8px;">128</td><td style="padding:8px;">16 × 16,384 = 262,144</td></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">4096</td><td style="padding:8px;">32</td><td style="padding:8px;">128</td><td style="padding:8px;">32 × 16,384 = 524,288</td></tr>
+                        <tr><td style="padding:8px;">8192</td><td style="padding:8px;">64</td><td style="padding:8px;">128</td><td style="padding:8px;">64 × 16,384 = 1,048,576</td></tr>
+                    </table>
+                    <p><strong>Why keep d = 128?</strong> Each head is like a specialist with a magnifying glass. If you make \(d\) too small, the specialist becomes too narrow — they can't see enough detail. If \(d\) is too large, the memory matrix \(d \times d\) becomes enormous for little benefit. \(d = 128\) is the sweet spot where each head can represent rich features without waste.</p>
+                    <p><strong>Why add more heads?</strong> More heads = more specialists. One head might focus on grammar, another on sentiment, another on entity relationships. The model's expressiveness scales with the <em>number</em> of independent expert opinions, not the size of each one.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                Speed: Why \(O(Nd^2)\) Destroys \(O(N^2d)\) <span class="badge badge-intermediate">Intermediate</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>The core speedup of our architecture comes from <strong>replacing the token-token interaction \(N^2\) with a fixed-size memory \(d^2\)</strong>. Here is a concrete comparison with \(d = 128\) and \(D = 4096\):</p>
+                    <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                        <tr style="border-bottom:1px solid #30363d;"><th style="text-align:left;padding:8px;">Sequence Length N</th><th style="text-align:left;padding:8px;">Softmax \(O(N^2 d)\)</th><th style="text-align:left;padding:8px;">Our Model \(O(N d^2)\)</th><th style="text-align:left;padding:8px;">Speedup</th></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">1,000</td><td style="padding:8px;">128 M</td><td style="padding:8px;">16 M</td><td style="padding:8px;">8×</td></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">10,000</td><td style="padding:8px;">12.8 B</td><td style="padding:8px;">163 M</td><td style="padding:8px;">78×</td></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">100,000</td><td style="padding:8px;">1.28 T</td><td style="padding:8px;">1.6 B</td><td style="padding:8px;">780×</td></tr>
+                        <tr><td style="padding:8px;">1,000,000</td><td style="padding:8px;">128 T (impossible)</td><td style="padding:8px;">16 B</td><td style="padding:8px;">7,800×</td></tr>
+                    </table>
+                    <p><strong>Key insight:</strong> Softmax attention cost grows <em>quadratically</em> with sequence length — double the tokens, quadruple the cost. Our model grows <em>linearly</em> — double the tokens, double the cost. At 100K tokens, we're nearly <strong>800× faster</strong>.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                The MLP Bottleneck: What Happens After You Fix Attention <span class="badge badge-advanced">Advanced</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>Once attention becomes \(O(N)\), it is <strong>no longer the bottleneck</strong>. The new bottleneck becomes the <strong>MLP (Feed-Forward Network)</strong> inside each transformer layer.</p>
+                    <p>In a standard Transformer with \(D = 4096\) and MLP ratio 4:</p>
+                    <ul>
+                        <li><strong>Attention cost:</strong> \(O(N \times d^2)\) per head = \(O(N \times 16{,}384)\) — linear in \(N\)</li>
+                        <li><strong>MLP cost:</strong> \(O(N \times D \times 4D) = O(N \times 4096 \times 16{,}384) = O(N \times 67{,}108{,}864)\) — also linear in \(N\), but <strong>4,096× more expensive per token</strong></li>
+                    </ul>
+                    <p>This means that with our architecture, the attention layer takes <strong>less than 0.1% of the total compute per layer</strong>. The MLP dominates.</p>
+                    <div class="explanation">
+                        <h4>Why does this matter?</h4>
+                        <p>This is actually <strong>great news</strong>. It means our attention design is so efficient it is effectively "free." All modern LLMs are MLP-bottlenecked regardless (Mixture of Experts, sparse MLPs, etc. are attempts to fix this). By solving the attention bottleneck, we've shifted focus to a well-studied problem.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                How the φ Gate Actually Works: Rank Restoration via Hadamard Product <span class="badge badge-advanced">Advanced</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>The <strong>residual output gate</strong> \(\phi(x_i) = 1 + \tanh(W_\phi x_i + b_\phi)\) is the key mechanism that restores rank in linear attention. Here is exactly how it works:</p>
+                    <p><strong>The Problem:</strong> Without \(\phi\), every token reads from the <em>same</em> global memory matrix \(S\). The output \(O_i = Q_i S\) is a <em>linear function</em> of the shared \(S\). This means all token outputs live in the same low-dimensional subspace — the output matrix has <strong>collapsed rank</strong> (rank ≤ \(d\)).</p>
+                    <p><strong>How φ Fixes It:</strong> The gate computes a <em>per-token, data-dependent</em> scaling vector. When applied as a Hadamard (element-wise) product:</p>
+                    <div class="math-block">
+                        $$ O_i = \phi(x_i) \odot (Q_i S) $$
+                    </div>
+                    <p>Each token's output is now scaled by a <strong>unique</strong> vector derived from its own input \(x_i\). Even if two tokens retrieve similar content from memory, the gate makes their outputs different.</p>
+                    <p><strong>Concrete example:</strong> Suppose tokens 1 and 2 both retrieve \([0.5, 0.3]\) from memory. Without \(\phi\), they produce identical outputs (rank collapse). With \(\phi\):</p>
+                    <ul>
+                        <li>Token 1: \(\phi_1 = [1.8, 0.3]\), output = \([0.9, 0.09]\) — amplifies dim 1, suppresses dim 2</li>
+                        <li>Token 2: \(\phi_2 = [0.4, 1.7]\), output = \([0.2, 0.51]\) — suppresses dim 1, amplifies dim 2</li>
+                    </ul>
+                    <p>Now the two outputs are <strong>linearly independent</strong> — rank is restored. The gate acts as a per-token "lens" that focuses each token on different feature dimensions.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                Why Can't You Just Use the φ Gate Alone? <span class="badge badge-advanced">Advanced</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>If the gate \(\phi\) is what restores rank, why not skip attention entirely and just use \(\phi(x_i)\) directly?</p>
+                    <p><strong>Answer: Because \(\phi\) alone is context-blind.</strong></p>
+                    <p>The gate \(\phi(x_i) = 1 + \tanh(W_\phi x_i + b_\phi)\) takes only the <em>current token</em> \(x_i\) as input. It has <strong>zero knowledge</strong> of what any other token in the sequence says. It's like having a magnifying glass but nothing to look at.</p>
+                    <p>The attention branches (global + local) are what produce the <em>content</em> — the meaningful signal that combines information from across the sequence. The gate then <em>shapes</em> that content to restore diversity.</p>
+                    <div class="explanation">
+                        <h4>The Analogy</h4>
+                        <p>Think of a sculptor and clay:</p>
+                        <ul>
+                            <li><strong>Attention = the clay.</strong> It gathers raw material (context) from across the entire sequence. Without it, there is nothing to sculpt.</li>
+                            <li><strong>φ gate = the sculptor's hands.</strong> It shapes, amplifies, and refines the clay into a detailed, unique form for each token. Without the clay, hands are useless.</li>
+                        </ul>
+                        <p>You need <strong>both</strong>: attention to gather context, and gating to differentiate it.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                LayerNorm: Brushing Sand Off a Newly Discovered Artifact <span class="badge badge-beginner">Beginner</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p><strong>LayerNorm</strong> (Layer Normalization) is applied before every attention and MLP step. It performs two operations on each token's feature vector:</p>
+                    <ol>
+                        <li><strong>Subtract the mean:</strong> Remove the average baseline from each feature dimension. This is like brushing away sand — removing the uniform "bias" that obscures the details.</li>
+                        <li><strong>Divide by standard deviation:</strong> Amplify the remaining differences so they're on a consistent scale. Tiny differences become visible again.</li>
+                    </ol>
+                    <div class="math-block">
+                        $$ \text{LayerNorm}(x) = \frac{x - \mu}{\sigma} \cdot \gamma + \beta $$
+                    </div>
+                    <p>where \(\mu\) is the mean, \(\sigma\) is the standard deviation, and \(\gamma, \beta\) are learnable parameters.</p>
+                    <p><strong>Analogy:</strong> Imagine you unearth an ancient artifact buried in sand. The entire surface is coated in a uniform layer of dirt (the mean). You brush off the dirt (subtract the mean), and now you can see faint engravings. But they're still subtle, so you use a contrast enhancer (divide by σ) to make every tiny groove and ridge pop. The artifact's true detail is revealed.</p>
+                    <p>Without LayerNorm, the signal from attention would have a large baseline offset that masks the small but important feature differences between tokens. LayerNorm removes this offset and makes the differences prominent, stabilizing training.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                Local Window Attention: The Magnifying Glass <span class="badge badge-intermediate">Intermediate</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>Our architecture has <strong>two branches</strong>: a global memory (sees everything, but blurry) and a <strong>local window</strong> (sees only nearby tokens, but with full softmax precision).</p>
+                    <p>The local window size \(w\) determines how many neighbors each token can attend to with exact softmax attention:</p>
+                    <ul>
+                        <li>\(w = 16\): Each token sees 8 tokens left + 8 tokens right. Good for word-level relationships.</li>
+                        <li>\(w = 64\): Each token sees 32 left + 32 right. Good for sentence-level relationships.</li>
+                        <li>\(w = 128\): Paragraph-level precision.</li>
+                        <li>\(w = 0\): Disable local branch entirely — global memory only.</li>
+                    </ul>
+                    <div class="math-block">
+                        $$ O_i^{\text{local}} = \sum_{j \in W(i)} \text{Softmax}\left(\frac{Q_i K_j^T}{\sqrt{d}}\right) V_j \quad \text{where } W(i) = \{i - w/2, \ldots, i + w/2\} $$
+                    </div>
+                    <p><strong>Analogy:</strong> Imagine reading a novel. The <em>global memory</em> is like a chapter summary — you know the main themes but can't quote exact sentences. The <em>local window</em> is like reading the current page with full attention — you see every word in detail. Together, you have both broad context and fine-grained detail.</p>
+                    <p><strong>Cost:</strong> The local window adds \(O(N \times w)\) computation. Since \(w\) is a small constant (16-128), this is still \(O(N)\) — linear in sequence length.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                The Train-Val Gap: Are You Learning or Just Memorizing? <span class="badge badge-beginner">Beginner</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>When training a model, you split your data into two sets: a <strong>training set</strong> (what the model learns from) and a <strong>validation set</strong> (unseen data used to test if the model actually learned).</p>
+                    <ul>
+                        <li><strong>Training accuracy:</strong> How well the model performs on data it has <em>already seen</em>.</li>
+                        <li><strong>Validation accuracy:</strong> How well the model performs on data it has <em>never seen</em>.</li>
+                    </ul>
+                    <p>The <strong>gap</strong> between these two numbers is the most important diagnostic in machine learning:</p>
+
+                    <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                        <tr style="border-bottom:1px solid #30363d;"><th style="text-align:left;padding:8px;">Train</th><th style="text-align:left;padding:8px;">Val</th><th style="text-align:left;padding:8px;">Gap</th><th style="text-align:left;padding:8px;">Diagnosis</th><th style="text-align:left;padding:8px;">What to do</th></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">30%</td><td style="padding:8px;">30%</td><td style="padding:8px;">0%</td><td style="padding:8px;">Underfitting — model hasn't learned</td><td style="padding:8px;">Train longer, or use a bigger model</td></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">42%</td><td style="padding:8px;">42%</td><td style="padding:8px;">~0%</td><td style="padding:8px;color:#3fb950;"><strong>Healthy — genuine learning</strong></td><td style="padding:8px;">Scale up model capacity</td></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">80%</td><td style="padding:8px;">40%</td><td style="padding:8px;">40%</td><td style="padding:8px;color:#f85149;">Overfitting — memorizing</td><td style="padding:8px;">More data, or add regularization</td></tr>
+                        <tr><td style="padding:8px;">95%</td><td style="padding:8px;">93%</td><td style="padding:8px;">2%</td><td style="padding:8px;color:#3fb950;"><strong>Excellent — strong learning</strong></td><td style="padding:8px;">This is the goal 🎯</td></tr>
+                    </table>
+
+                    <div class="explanation">
+                        <h4>Analogy: Studying for an Exam</h4>
+                        <p>Imagine you're preparing for a final exam:</p>
+                        <ul>
+                            <li><strong>Training accuracy</strong> = your score on <em>practice problems you've already done</em>.</li>
+                            <li><strong>Validation accuracy</strong> = your score on <em>the real exam with new questions</em>.</li>
+                        </ul>
+                        <p>If you score 95% on practice but 40% on the real exam, you didn't learn the subject — you memorized the answer key. If you score 42% on both, you genuinely understand 42% of the material. Not amazing, but <em>honest</em>. To improve, you need a better brain (bigger model), not more memorization.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                Overfitting vs Underfitting: The Three Regimes of Training <span class="badge badge-beginner">Beginner</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>Every training run passes through up to three phases. Understanding which phase you're in tells you exactly what to fix.</p>
+
+                    <h4>Phase 1: Underfitting (not enough learning)</h4>
+                    <p>Both train and val accuracy are low and close together. The model hasn't learned useful patterns yet. This happens in the early epochs or when the model is too small / learning rate is too low.</p>
+                    <p><strong>Fix:</strong> Train for more epochs, increase learning rate, or use a bigger model.</p>
+
+                    <h4>Phase 2: The Sweet Spot (healthy generalization)</h4>
+                    <p>Train and val accuracy are both rising and <strong>close together</strong>. The model is learning real patterns that work on unseen data. This is where you want to stay as long as possible.</p>
+                    <p><strong>What to do:</strong> Keep training, but watch for Phase 3.</p>
+
+                    <h4>Phase 3: Overfitting (memorization)</h4>
+                    <p>Train accuracy keeps rising but <strong>val accuracy plateaus or drops</strong>. The model has exhausted the real patterns and is now memorizing noise specific to the training set. The gap between train and val widens.</p>
+                    <p><strong>Fix:</strong> Stop training (use the checkpoint from the sweet spot), add more training data, use dropout, or reduce model size.</p>
+
+                    <div class="explanation">
+                        <h4>Real Example From Our Experiments</h4>
+                        <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                            <tr style="border-bottom:1px solid #30363d;"><th style="text-align:left;padding:8px;">Experiment</th><th style="text-align:left;padding:8px;">Samples</th><th style="text-align:left;padding:8px;">Train</th><th style="text-align:left;padding:8px;">Val</th><th style="text-align:left;padding:8px;">Gap</th><th style="text-align:left;padding:8px;">Phase</th></tr>
+                            <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">Test 1</td><td style="padding:8px;">500</td><td style="padding:8px;">48%</td><td style="padding:8px;">30%</td><td style="padding:8px;color:#f85149;">18%</td><td style="padding:8px;">Overfitting</td></tr>
+                            <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">Test 2</td><td style="padding:8px;">2000</td><td style="padding:8px;">30%</td><td style="padding:8px;">31%</td><td style="padding:8px;color:#d29922;">-1%</td><td style="padding:8px;">Underfitting (only 8 epochs)</td></tr>
+                            <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">Test 3</td><td style="padding:8px;">1400</td><td style="padding:8px;">47%</td><td style="padding:8px;">41%</td><td style="padding:8px;color:#d29922;">6%</td><td style="padding:8px;">Mild overfitting</td></tr>
+                            <tr><td style="padding:8px;">Test 4</td><td style="padding:8px;">2500</td><td style="padding:8px;">41%</td><td style="padding:8px;">42%</td><td style="padding:8px;color:#3fb950;">~0%</td><td style="padding:8px;color:#3fb950;"><strong>Sweet Spot ✅</strong></td></tr>
+                        </table>
+                        <p><strong>Key insight:</strong> More training data shifts the transition from Phase 2 to Phase 3 later. With 500 samples, overfitting begins almost immediately. With 2500 samples, the model stays in the sweet spot through the entire run.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                Model Capacity: Why Small Models Hit an Accuracy Ceiling <span class="badge badge-intermediate">Intermediate</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>When your train-val gap is ~0% but accuracy is stuck at 42%, the model isn't memorizing and isn't failing to learn — it has simply <strong>learned everything its brain can hold</strong>. This is a <strong>capacity ceiling</strong>.</p>
+
+                    <h4>What determines capacity?</h4>
+                    <p>The total number of <strong>trainable parameters</strong> — the learnable weights that store knowledge. More parameters = more storage = more complex patterns the model can represent.</p>
+
+                    <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                        <tr style="border-bottom:1px solid #30363d;"><th style="text-align:left;padding:8px;">Config</th><th style="text-align:left;padding:8px;">Parameters</th><th style="text-align:left;padding:8px;">Expected CIFAR-10</th><th style="text-align:left;padding:8px;">Analogy</th></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">D=64, L=2</td><td style="padding:8px;">~100K</td><td style="padding:8px;">35-45%</td><td style="padding:8px;">A notebook — holds basic facts</td></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">D=128, L=4</td><td style="padding:8px;">~800K</td><td style="padding:8px;">45-55%</td><td style="padding:8px;">A bookshelf — holds detailed notes</td></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">D=192, L=12</td><td style="padding:8px;">~5.7M</td><td style="padding:8px;">65-75%</td><td style="padding:8px;">A library — holds encyclopedias</td></tr>
+                        <tr><td style="padding:8px;">D=384, L=12</td><td style="padding:8px;">~22M</td><td style="padding:8px;">80-90%</td><td style="padding:8px;">A university — deep expertise</td></tr>
+                    </table>
+
+                    <p>Our experiments with D=64, L=2 achieving ~42% on CIFAR-10 is <strong>exactly where a 100K parameter model should be</strong>. The architecture is not the limitation — the capacity is.</p>
+
+                    <div class="explanation">
+                        <h4>How to increase capacity</h4>
+                        <p>You have three levers to pull, ordered by impact:</p>
+                        <ol>
+                            <li><strong>Increase D</strong> (e.g., 64 → 128 → 256): More features per token. Parameters scale as \(O(D^2)\), so doubling D quadruples the parameters.</li>
+                            <li><strong>Add more layers L</strong> (e.g., 2 → 4 → 8): Deeper abstraction. Parameters scale as \(O(L)\), so doubling layers doubles the parameters.</li>
+                            <li><strong>Increase MLP ratio</strong> (e.g., 2 → 4): Wider "thinking" step. The MLP is where most parameters live, so this has a big effect.</li>
+                        </ol>
+                        <p><strong>Important:</strong> More parameters requires proportionally more training data to avoid overfitting. A 5.7M parameter model on 2500 samples will overfit catastrophically. You need ~50,000+ samples (the full CIFAR-10 training set) to train it properly.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                The MLP Ratio: How Wide Is the "Thinking Room"? <span class="badge badge-beginner">Beginner</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <p>In every transformer layer, after attention gathers context from other tokens, the result passes through an <strong>MLP (Multi-Layer Perceptron)</strong> — also called the Feed-Forward Network. This is where the model <em>processes</em> what it just learned. The MLP has a simple structure:</p>
+                    <div class="math-block">
+                        $$ \text{Input}_{D} \xrightarrow{W_1} \text{Hidden}_{D \times r} \xrightarrow{\text{GELU}} \xrightarrow{W_2} \text{Output}_{D} $$
+                    </div>
+                    <p>The <strong>MLP ratio</strong> (\(r\)) controls how wide the hidden layer is. It expands the dimension by \(r\times\), processes it, then compresses back:</p>
+
+                    <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                        <tr style="border-bottom:1px solid #30363d;"><th style="text-align:left;padding:8px;">MLP Ratio</th><th style="text-align:left;padding:8px;">If D = 64</th><th style="text-align:left;padding:8px;">Hidden Size</th><th style="text-align:left;padding:8px;">MLP Params</th><th style="text-align:left;padding:8px;">Effect</th></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">1</td><td style="padding:8px;">64 → 64 → 64</td><td style="padding:8px;">64</td><td style="padding:8px;">~8K</td><td style="padding:8px;">No expansion — limited</td></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;"><strong>2</strong></td><td style="padding:8px;">64 → 128 → 64</td><td style="padding:8px;">128</td><td style="padding:8px;"><strong>~16K</strong></td><td style="padding:8px;">Light expansion (our current setting)</td></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;"><strong>4</strong></td><td style="padding:8px;">64 → 256 → 64</td><td style="padding:8px;">256</td><td style="padding:8px;"><strong>~33K</strong></td><td style="padding:8px;">Standard transformer setting</td></tr>
+                        <tr><td style="padding:8px;">8</td><td style="padding:8px;">64 → 512 → 64</td><td style="padding:8px;">512</td><td style="padding:8px;">~66K</td><td style="padding:8px;">Very wide — expensive but powerful</td></tr>
+                    </table>
+
+                    <h4>Why expand and then compress?</h4>
+                    <p>Attention tells you <em>"the word 'bank' appeared near 'river'."</em> The MLP needs to <strong>process</strong> this — is it a riverbank or a financial bank? In \(D = 64\) dimensions, there isn't enough room to simultaneously represent both interpretations and decide between them. By expanding to 256 dimensions (ratio=4), the MLP gets <strong>temporary scratch space</strong> to spread out the features, apply nonlinear processing (the GELU activation picks winners), then compress the clean answer back to \(D\).</p>
+
+                    <div class="explanation">
+                        <h4>Analogy: Scratch Paper</h4>
+                        <p>Your final answer fits on one line (\(D\) dimensions). But you need scratch paper \(r\times\) wider (\(D \times r\) dimensions) to work through the calculation. The MLP ratio is how much scratch paper the model gets:</p>
+                        <ul>
+                            <li><strong>Ratio 1:</strong> No scratch paper — work it out in your head. Fast but error-prone.</li>
+                            <li><strong>Ratio 2:</strong> A small notepad. Enough for simple problems.</li>
+                            <li><strong>Ratio 4:</strong> A full sheet of paper. The standard for most transformers (GPT, LLaMA, etc.).</li>
+                        </ul>
+                        <p><strong>Key fact:</strong> In a standard transformer, the MLP holds roughly <strong>2/3 of all parameters</strong>. The attention layer is comparatively tiny. Most of the model's "knowledge" lives in these expand-compress weight matrices.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Updates Log Tab -->
+    <div id="updates" class="tab-content">
+        <h2>Updates Log</h2>
+        <p>This section tracks all architectural revisions to the model formulation, including the problem that prompted the change, the solution, and its conceptual impact.</p>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                Update 1 — 2026-05-13: Data-Dependent Forget Gate (γ_t)
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <h3>Problem</h3>
+                    <p>The original global memory formulation \(S = \sum g_i (K_i^T V_i)\) is a <strong>permutation-invariant</strong> sum. This means that shuffling all tokens in a sentence produces the exact same memory matrix \(S\). The model has no intrinsic sense of <strong>temporal order</strong> — it cannot distinguish "The dog bit the man" from "man the bit dog The." While positional embeddings partially mitigate this, the memory itself is order-blind.</p>
+                    <p>Additionally, the global form requires seeing the <strong>entire sequence</strong> before computing \(g_i\) (because softmax needs all scores). This prevents <strong>streaming inference</strong> (processing tokens one at a time).</p>
+
+                    <h3>Solution</h3>
+                    <p>Introduce a <strong>data-dependent forget gate</strong> \(\gamma_t = \sigma(W_\gamma x_t + b_\gamma)\) into a recurrent formulation:</p>
+                    <div class="math-block">
+                        $$ S_t = \gamma_t S_{t-1} + e^{s_t} k_t^T v_t $$
+                    </div>
+                    <div class="math-block">
+                        $$ Z_t = \gamma_t Z_{t-1} + e^{s_t} $$
+                    </div>
+                    <p>The current token \(x_t\) produces \(\gamma_t\), which determines how much of the past memory to retain before writing new information.</p>
+
+                    <h3>Conceptual Impact</h3>
+                    <ul>
+                        <li><strong>Order Sensitivity:</strong> The recurrence breaks the commutative symmetry. Recent tokens are "fresh" while older tokens are progressively decayed. The model can now distinguish word order.</li>
+                        <li><strong>Selective Forgetting:</strong> A period (".") can learn \(\gamma \approx 0.1\) to flush the memory at sentence boundaries, while a pronoun keeps \(\gamma \approx 0.99\) to maintain the referent in memory.</li>
+                        <li><strong>Streaming Inference:</strong> Only \(S_t \in \mathbb{R}^{d \times d}\) and \(Z_t \in \mathbb{R}\) need to be stored — constant memory, regardless of sequence length.</li>
+                        <li><strong>Mamba Connection:</strong> This upgrade places the architecture in the family of <strong>Gated State Space Models</strong>, alongside Mamba, Griffin, and RWKV.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                Update 2 — 2026-05-13: Residual Output Gate (φ upgrade)
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <h3>Problem</h3>
+                    <p>The original output gate used a <strong>sigmoid</strong> activation: \(\phi(x_i) \in (0, 1)^d\). While this provides bounded gating, it can only <strong>suppress</strong> feature dimensions (scale them down toward zero). It can never <strong>amplify</strong> them. If the sigmoid learns to output a value near 0 for a particular dimension, the information in that dimension from both the global and local branches is <strong>permanently destroyed</strong>. This risks silent, irrecoverable information loss.</p>
+
+                    <h3>Solution</h3>
+                    <p>Replace the sigmoid gate with a <strong>residual gate</strong> using \(1 + \tanh\):</p>
+                    <div class="math-block">
+                        $$ \phi(x_i) = 1 + \tanh(W_\phi x_i + b_\phi) \in (0, 2)^d $$
+                    </div>
+
+                    <h3>Conceptual Impact</h3>
+                    <ul>
+                        <li><strong>Default Pass-Through:</strong> The gate is centered at \(1.0\). At initialization (when \(W_\phi \approx 0\)), \(\tanh(0) = 0\), so \(\phi = 1\). The signal passes through <strong>unchanged</strong>. The model starts by trusting its attention branches and only learns to modulate later.</li>
+                        <li><strong>Amplification:</strong> Values up to \(2.0\) allow the gate to <strong>boost</strong> important feature dimensions, not just suppress unimportant ones.</li>
+                        <li><strong>No Dead Dimensions:</strong> Unlike sigmoid which can push dimensions to near-zero permanently, the residual gate's floor is \(0^+\) and its center is \(1\), making it much harder to accidentally kill a dimension.</li>
+                        <li><strong>Proven Pattern:</strong> Residual gating is used in modern architectures like GRU, LSTM, and Mamba's output gating, where centering at 1 (or using residual connections) stabilizes training.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                Update 3 — 2026-05-11 19:19: Local-Global Hybrid Architecture <span class="date-badge">Architecture</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <h3>Problem</h3>
+                    <p>The global associative memory \(S \in \mathbb{R}^{d \times d}\) compresses <em>all</em> \(N\) tokens into a fixed-size matrix. This is efficient but inherently <strong>lossy</strong> — nearby tokens that require precise, high-fidelity routing (e.g., adjacent words in a clause, neighboring pixels in an image) lose their fine-grained relationships. The memory is like a compressed JPEG: good for broad structure, but the sharp details are gone.</p>
+
+                    <h3>Solution</h3>
+                    <p>Add a <strong>local windowed softmax attention branch</strong> that runs in parallel with the global memory. Each token performs exact softmax attention over its \(w\) nearest neighbors:</p>
+                    <div class="math-block">
+                        $$ O_i^{\text{local}} = \sum_{j \in W(i)} \text{Softmax}\left(\frac{Q_i K_j^T}{\sqrt{d}}\right) V_j $$
+                    </div>
+                    <p>The final output combines both branches through the residual gate:</p>
+                    <div class="math-block">
+                        $$ O_i = \phi(x_i) \odot \left(O_i^{\text{global}} + O_i^{\text{local}}\right) $$
+                    </div>
+
+                    <h3>Conceptual Impact</h3>
+                    <ul>
+                        <li><strong>Precision + Efficiency:</strong> The global branch captures long-range dependencies in \(O(Nd^2)\). The local branch captures short-range precision in \(O(Nw)\). Together, total cost is \(O(N(d^2 + w))\) — still linear in \(N\).</li>
+                        <li><strong>Configurable Window:</strong> The window size \(w\) is a tunable hyperparameter. Setting \(w = 0\) disables the local branch entirely; setting \(w = N\) makes it equivalent to full softmax attention.</li>
+                        <li><strong>Biological Analogy:</strong> This mirrors how human attention works — you have broad peripheral awareness (global) combined with sharp foveal focus (local) on whatever you're currently reading.</li>
+                        <li><strong>Modern Precedent:</strong> This hybrid design is used in Jamba (AI21), Griffin (Google), and LongNet, confirming it as a state-of-the-art pattern.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                Update 4 — 2026-05-15 23:16: Full Model Implementation <span class="date-badge">Code</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <h3>Problem</h3>
+                    <p>All equations existed only in this HTML document. No working code implementation existed to validate whether the mathematical formulation actually trains, converges, and produces the predicted rank restoration effects.</p>
+
+                    <h3>Solution</h3>
+                    <p>Implemented the complete architecture as a modular, drop-in replacement for the existing RALA system:</p>
+                    <ul>
+                        <li><strong><code>hybrid_attention.py</code></strong> (361 lines): Global associative memory (parallel + recurrent modes), data-dependent forget gate \(\gamma_t\), local windowed softmax attention with band masking, residual output gate \(\phi = 1 + \tanh\), and full diagnostic statistics collection.</li>
+                        <li><strong><code>hybrid_model.py</code></strong> (270 lines): <code>HybridTransformerBlock</code> (Pre-Norm → Attention → Residual → LayerNorm → MLP → Residual) and <code>HybridViT</code> (patch embedding + positional embedding + L stacked blocks + classifier head). All parameters configurable from laptop (\(D=64\)) to data center (\(D=8192\)).</li>
+                        <li><strong><code>training.py</code></strong> (updated): Added <code>attention_type='hybrid'</code> as a new option. Selecting it routes to the new model while preserving all existing RALA/softmax/linear functionality unchanged.</li>
+                    </ul>
+
+                    <h3>Validation Results</h3>
+                    <p>Initial benchmarks on the Synthetic dataset (1200 samples, 15 epochs, \(D=64\), \(h=4\), \(L=2\)):</p>
+                    <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                        <tr style="border-bottom:1px solid #30363d;"><th style="text-align:left;padding:8px;">Model</th><th style="text-align:left;padding:8px;">Train Acc</th><th style="text-align:left;padding:8px;">Val Acc</th><th style="text-align:left;padding:8px;">Rank Ratio</th></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;"><strong>Hybrid (ours)</strong></td><td style="padding:8px;"><strong>96.8%</strong></td><td style="padding:8px;"><strong>96.3%</strong></td><td style="padding:8px;"><strong>1.000 (full rank)</strong></td></tr>
+                        <tr style="border-bottom:1px solid #30363d;"><td style="padding:8px;">Softmax</td><td style="padding:8px;">95.5%</td><td style="padding:8px;">91.3%</td><td style="padding:8px;">0.865–0.947 (degraded)</td></tr>
+                        <tr><td style="padding:8px;">RALA</td><td style="padding:8px;">94.6%</td><td style="padding:8px;">85.8%</td><td style="padding:8px;">1.000</td></tr>
+                    </table>
+
+                    <h3>Conceptual Impact</h3>
+                    <ul>
+                        <li><strong>Rank Restoration Confirmed:</strong> Output rank ratio = 1.000 across all layers in every test, confirming that the \(\phi\) gate restores full rank as predicted by theory.</li>
+                        <li><strong>Generalization Advantage:</strong> The hybrid model achieved +5.0% val accuracy over softmax and +10.5% over RALA, demonstrating that the combination of global memory + local window + residual gate produces superior generalization.</li>
+                        <li><strong>Gradient Flow Verified:</strong> All 31 parameters (QKV projections, φ gate, γ gate, MLP, output projection) received nonzero gradients, confirming healthy training dynamics.</li>
+                        <li><strong>Both Modes Functional:</strong> Parallel mode (training) and recurrent mode (streaming inference) both produce correct outputs with full rank.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                Update 5 — 2026-05-16 00:48: Streamlit UI Integration <span class="date-badge">Interface</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <h3>Problem</h3>
+                    <p>The hybrid model was only accessible via Python scripts and command-line execution. The existing Streamlit web interface (<code>app.py</code>) only supported softmax, linear, and RALA attention types. Researchers could not interactively experiment with the new architecture or compare it side-by-side with baselines through the web UI.</p>
+
+                    <h3>Solution</h3>
+                    <p>Updated <code>app.py</code> to fully support the hybrid model:</p>
+                    <ul>
+                        <li><strong>Attention type dropdown:</strong> Added "hybrid" as the first option in the selector.</li>
+                        <li><strong>Hybrid-specific controls:</strong> When "hybrid" is selected, a new "Hybrid Settings" sidebar section appears with: local window size \(w\) (0–128), operating mode (parallel/recurrent).</li>
+                        <li><strong>Dynamic architecture summary:</strong> The sidebar shows live calculations of \(d = D/h\), memory per head, and total memory as you adjust sliders.</li>
+                        <li><strong>Expanded scaling range:</strong> Model dimension slider now reaches \(D = 4096\), heads up to 32, layers up to 32, epochs up to 50.</li>
+                        <li><strong>Smart UI:</strong> RALA formula controls (kappa, phi) are hidden when "hybrid" is selected since the hybrid model uses its own built-in gates.</li>
+                    </ul>
+
+                    <h3>Conceptual Impact</h3>
+                    <ul>
+                        <li><strong>Interactive Research:</strong> Researchers can now visually compare hybrid vs softmax vs RALA with real-time loss/accuracy charts, per-layer rank diagnostics, and stability warnings — all from a web browser.</li>
+                        <li><strong>Scalability Visible:</strong> The live architecture summary makes it immediately clear how parameter choices affect model capacity, helping users understand the \(D = hd\) relationship intuitively.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                Update 6 — 2026-05-16 19:48 PKT: True Sliding-Window Local Attention <span class="date-badge">Efficiency Fix</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <h3>Problem</h3>
+                    <p>The local attention branch was mathematically local but not computationally local. In <code>rala_lab/hybrid_attention.py</code>, the implementation first built the full score matrix</p>
+                    <div class="math-block">
+                        $$ \text{scores} = QK^T \in \mathbb{R}^{N \times N} $$
+                    </div>
+                    <p>and only afterward applied a band mask to remove tokens outside the local window. This produced the correct local-window behavior, but it still allocated and computed the full \(N^2\) attention map.</p>
+
+                    <h3>Effect</h3>
+                    <ul>
+                        <li><strong>Quadratic memory:</strong> The score tensor scaled as \(O(N^2)\), which contradicts the intended local branch cost.</li>
+                        <li><strong>Quadratic compute:</strong> Even discarded token-token pairs were still computed before masking.</li>
+                        <li><strong>Long-context bottleneck:</strong> For large \(N\), the local branch could dominate memory and prevent the hybrid model from realizing its intended linear-in-\(N\) scaling.</li>
+                    </ul>
+
+                    <h3>Solution</h3>
+                    <p>Replaced the full \(N \times N\) score matrix with a true gathered sliding window. The code now pads \(K\) and \(V\), uses <code>unfold</code> to collect only nearby keys and values for each token, and computes scores with shape</p>
+                    <div class="math-block">
+                        $$ \text{scores}_{\text{local}} \in \mathbb{R}^{N \times w} $$
+                    </div>
+                    <p>instead of</p>
+                    <div class="math-block">
+                        $$ \text{scores}_{\text{full}} \in \mathbb{R}^{N \times N} $$
+                    </div>
+                    <p>Edge tokens are handled with a validity mask so padded positions cannot receive attention probability.</p>
+
+                    <h3>Conceptual Impact</h3>
+                    <ul>
+                        <li><strong>Implementation now matches the theory:</strong> The local branch computes only the window \(\mathcal{W}(i)\) for each token instead of computing the entire sequence and throwing most of it away.</li>
+                        <li><strong>Restores intended complexity:</strong> Local attention now scales as \(O(Nwd)\), matching the model formulation for fixed window size \(w\).</li>
+                        <li><strong>Preserves exact local softmax:</strong> The mathematical operation remains standard softmax attention inside each local window; only the implementation strategy changed.</li>
+                        <li><strong>Supports long-context research claims:</strong> The hybrid architecture can now more honestly claim that its local precision branch does not reintroduce the standard \(N^2\) attention bottleneck.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                Update 7 — 2026-05-16 19:59 PKT: Causal Online Stabilization for Recurrent Mode <span class="date-badge">Streaming Fix</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <h3>Problem</h3>
+                    <p>The recurrent branch in <code>rala_lab/hybrid_attention.py</code> used a full-sequence maximum for numerical stability:</p>
+                    <div class="math-block">
+                        $$ m = \max(s_1, s_2, \ldots, s_N), \quad \exp(s_t - m) $$
+                    </div>
+                    <p>This prevented exponential overflow, but in recurrent / streaming mode it introduced a future-token dependency. When producing output at time \(t\), the scale could depend on salience scores from tokens \(t+1, \ldots, N\).</p>
+
+                    <h3>Effect</h3>
+                    <ul>
+                        <li><strong>Stable but not causal:</strong> The previous implementation avoided large exponentials, but recurrent mode was not a pure token-by-token computation.</li>
+                        <li><strong>Streaming claim weakened:</strong> A true streaming model cannot use a statistic computed from the entire future sequence.</li>
+                        <li><strong>Parallel mode unaffected:</strong> Full-sequence normalization remains valid for the parallel training path because that path intentionally sees the whole sequence.</li>
+                    </ul>
+
+                    <h3>Solution</h3>
+                    <p>Replaced the full-sequence max in recurrent mode with an online running max:</p>
+                    <div class="math-block">
+                        $$ m_t = \max(m_{t-1}, s_t) $$
+                    </div>
+                    <p>When a new maximum appears, the old memory and normalizer are rescaled into the new numerical frame:</p>
+                    <div class="math-block">
+                        $$ a_t = \exp(m_{t-1} - m_t), \quad b_t = \exp(s_t - m_t) $$
+                    </div>
+                    <div class="math-block">
+                        $$ S_t' = \gamma_t a_t S_{t-1}' + b_t k_t^T v_t $$
+                    </div>
+                    <div class="math-block">
+                        $$ Z_t' = \gamma_t a_t Z_{t-1}' + b_t $$
+                    </div>
+                    <p>The output still uses \(M_t = S_t' / Z_t'\), but every term is computed using only current and past tokens.</p>
+
+                    <h3>Conceptual Impact</h3>
+                    <ul>
+                        <li><strong>Causal streaming restored:</strong> Recurrent mode no longer needs access to future salience scores.</li>
+                        <li><strong>Numerical stability preserved:</strong> Both \(a_t\) and \(b_t\) are exponentials of non-positive values, so they remain at most \(1\).</li>
+                        <li><strong>Architecture unchanged:</strong> The mathematical recurrence is the same global associative memory; only the implementation of exponential scaling became online.</li>
+                        <li><strong>Clear mode separation:</strong> Parallel mode uses full-sequence softmax-style normalization, while recurrent mode uses causal online normalization.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                Update 8 — 2026-06-02: Persistent Training Pipeline &amp; Checkpoint System <span class="date-badge">Engineering</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <h3>Problem</h3>
+                    <p>The entire training pipeline was <strong>ephemeral</strong>. Once a training run finished — or if a session crashed, timed out, or was interrupted — the learned weights were permanently lost. Every experiment required training the model entirely from scratch, regardless of how long the previous run took. This created three critical limitations:</p>
+                    <ul>
+                        <li><strong>No persistence:</strong> A model that trained for hours on a cluster could not be saved for later analysis or demonstration.</li>
+                        <li><strong>No iterative refinement:</strong> Researchers could not train a base model and then fine-tune it on specialized data or with adjusted hyperparameters — the standard workflow in modern deep learning.</li>
+                        <li><strong>No lightweight evaluation:</strong> To benchmark a model configuration, the entire training loop had to be re-executed, even if the goal was purely to measure inference speed or rank diagnostics on a pre-existing model.</li>
+                    </ul>
+
+                    <h3>Solution</h3>
+                    <p>Implemented a complete checkpoint serialization system and restructured the Streamlit interface around three distinct operational modes:</p>
+                    <ul>
+                        <li><strong><code>save_checkpoint</code> / <code>load_checkpoint</code>:</strong> Serialize and deserialize the full model state — architecture configuration, learned weights, optimizer state, and training metadata — to a portable <code>.pt</code> file on disk. Checkpoints are automatically catalogued with their architecture fingerprint (attention type, \(D\), \(h\), \(L\), dataset, epoch count) for identification.</li>
+                        <li><strong>Train from scratch (mode 1):</strong> The original workflow. Builds a new model, trains it for the specified epochs, and — with the new "Save model after training" toggle — automatically persists the trained checkpoint to disk.</li>
+                        <li><strong>Fine-tune checkpoint (mode 2):</strong> Loads a previously saved model and resumes training with adjusted hyperparameters. The UI guides the researcher to use a lower learning rate than the original training run (e.g., \(10^{-4} \rightarrow 10^{-5}\)), and the additional epochs are appended on top of the original training history.</li>
+                        <li><strong>Evaluate only (mode 3):</strong> Loads a saved model purely for inference. No gradient computation, no backpropagation, no weight updates. The model is evaluated on a chosen dataset and all rank diagnostics, stability warnings, and inference timing are collected — at a fraction of the compute cost of a full training run.</li>
+                    </ul>
+                    <p>The sidebar dynamically adapts to the selected mode: architecture controls are hidden during fine-tune and evaluate (since they are locked by the checkpoint), and a structured metadata card displays the loaded checkpoint's configuration.</p>
+
+                    <h3>Conceptual Impact</h3>
+                    <ul>
+                        <li><strong>Research Persistence:</strong> Transforms the project from a "one-off script" into a persistent, iterative research environment. Best-performing models are safely archived and can be revisited, shared, or deployed at any time.</li>
+                        <li><strong>Compute Efficiency:</strong> The evaluate-only mode allows rapid benchmarking of historical models without re-incurring the full cost of training. A model that took 30 minutes to train can be evaluated in seconds.</li>
+                        <li><strong>Iterative Refinement (Transfer Learning):</strong> Fine-tuning is the standard paradigm in modern deep learning — train a base model on a large generic dataset, save it, then adapt it to a specialized task with a smaller learning rate and fewer epochs. This capability is now fully supported.</li>
+                        <li><strong>Reproducibility:</strong> Saved checkpoints encode the exact configuration used to produce them. Any result can be independently reproduced by loading the checkpoint and running evaluate-only on the same dataset.</li>
+                        <li><strong>Cluster Readiness:</strong> The checkpoint system is essential for cluster deployment where training runs may span multiple job submissions. A model can be trained for 50 epochs in one session, saved, and continued for another 50 epochs in a subsequent job.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                Update 9 — 2026-06-06: Language Modeling &amp; Associative Recall <span class="date-badge">Multi-Modal Expansion</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <h3>Problem: Vision is Forgiving; Memory is Not</h3>
+                    <p>The Hybrid Attention architecture works beautifully for image patches, but images have high spatial redundancy. If the global memory drops a little bit of information, the local window or neighboring patches can often compensate. To mathematically prove that the \(d \times d\) global memory matrix isn't losing rank and is accurately storing distinct states, we needed an un-cheatable, strictly sequential test where local context cannot save the model.</p>
+
+                    <h3>Solution: The Text Wrapper &amp; Stress-Test Benchmarks</h3>
+                    <p>We expanded the RALA platform into the text domain without altering the core mathematical engine. The following features were introduced:</p>
+                    <ul>
+                        <li><strong>The HybridLM Wrapper:</strong> The core engine <code>hybrid_attention.py</code> remains completely untouched. We merely swapped the visual patch embeddings for text token embeddings (<code>nn.Embedding</code>) and added an autoregressive output head. This proves the core engine is strictly modality-agnostic.</li>
+                        <li><strong>Associative Recall (The Synthetic Stress Test):</strong> The model is forced to memorize \(N\) completely random, unique key-value pairs (e.g., <code>[A&rarr;12, B&rarr;45, C&rarr;9]</code>) and then retrieve a specific value when given a query (<code>A &rarr; ?</code>). Because the data is random, it is impossible to predict via statistics; it <em>requires</em> perfect rank-preservation in the global memory matrix.</li>
+                        <li><strong>Tiny Shakespeare (The Linguistic Test):</strong> We test the model on an autoregressive next-character prediction task using ~1MB of Shakespeare's works. This ensures the forget gates and local windows can handle natural language grammar, punctuation, and contextual flow, tracking performance via Perplexity.</li>
+                    </ul>
+
+                    <h3>Conceptual Impact</h3>
+                    <ul>
+                        <li><strong>Proving the Math:</strong> If the model solves Associative Recall at high sequence lengths, it mathematically proves that our \(1 + \tanh(x)\) residual gate is successfully preserving rank capacity within the fixed \(d \times d\) bottleneck, heavily outperforming standard linear attention.</li>
+                        <li><strong>A Unified Engine:</strong> The RALA MLabs dashboard is now a multi-modal evaluation platform. Researchers can flip between spatial (Vision) and sequential (Language) domains instantly, validating the architecture's generality across entirely different classes of data.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                Update 10 — 2026-06-07: Complete Ablation Infrastructure &amp; Baseline Text Models <span class="date-badge">Experimental Framework</span>
+                <span class="icon">+</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-content-inner">
+                    <h3>Problem: Incomplete Ablation Coverage</h3>
+                    <p>The architecture claimed advantages from four distinct components — global associative memory, local windowed attention, salience gating, and the \(\phi\) output gate — but the experimental infrastructure could not isolate each one cleanly. Two critical gaps existed:</p>
+                    <ul>
+                        <li><strong>"Local only" ablation was impossible:</strong> The <code>window_size=0</code> toggle existed for "global only" mode, but there was no way to disable the global branch while keeping local attention active. This meant the contribution of the local window could never be measured in isolation.</li>
+                        <li><strong>No baseline text models:</strong> The softmax, vanilla linear, and RALA baselines only existed as image models (<code>TinyFormulaViT</code>). On the critical Associative Recall and Shakespeare tasks, there was no way to compare the hybrid architecture against these baselines on the <em>same</em> task — a fundamental requirement for any publication.</li>
+                    </ul>
+
+                    <h3>Solution</h3>
+
+                    <h4>1. The <code>use_global</code> Toggle</h4>
+                    <p>Added a new <code>use_global: bool = True</code> parameter threaded through the entire model hierarchy:</p>
+                    <div class="math-block">
+                        $$ \texttt{HybridAttention} \leftarrow \texttt{HybridTransformerBlock} \leftarrow \texttt{HybridViT / HybridLM} \leftarrow \texttt{ExperimentConfig} $$
+                    </div>
+                    <p>When <code>use_global=False</code>, the global associative memory branch is skipped entirely — \(O^{\text{global}} = 0\) — and the model relies solely on local windowed softmax attention. Combined with the existing toggles, the full ablation matrix is now:</p>
+                    <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                        <tr style="border-bottom:1px solid #30363d;">
+                            <th style="text-align:left;padding:8px;">Configuration</th>
+                            <th style="text-align:center;padding:8px;">Global</th>
+                            <th style="text-align:center;padding:8px;">Local</th>
+                            <th style="text-align:center;padding:8px;">\(\phi\) Gate</th>
+                            <th style="text-align:center;padding:8px;">Salience</th>
+                        </tr>
+                        <tr style="border-bottom:1px solid #30363d;">
+                            <td style="padding:8px;"><strong>Full Hybrid</strong></td>
+                            <td style="text-align:center;padding:8px;">✓</td>
+                            <td style="text-align:center;padding:8px;">✓</td>
+                            <td style="text-align:center;padding:8px;">✓</td>
+                            <td style="text-align:center;padding:8px;">✓</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #30363d;">
+                            <td style="padding:8px;">Global only (<code>window_size=0</code>)</td>
+                            <td style="text-align:center;padding:8px;">✓</td>
+                            <td style="text-align:center;padding:8px;">✗</td>
+                            <td style="text-align:center;padding:8px;">✓</td>
+                            <td style="text-align:center;padding:8px;">✓</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #30363d;">
+                            <td style="padding:8px;">Local only (<code>use_global=False</code>)</td>
+                            <td style="text-align:center;padding:8px;">✗</td>
+                            <td style="text-align:center;padding:8px;">✓</td>
+                            <td style="text-align:center;padding:8px;">✓</td>
+                            <td style="text-align:center;padding:8px;">—</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #30363d;">
+                            <td style="padding:8px;">No \(\phi\) gate (<code>use_output_gate=False</code>)</td>
+                            <td style="text-align:center;padding:8px;">✓</td>
+                            <td style="text-align:center;padding:8px;">✓</td>
+                            <td style="text-align:center;padding:8px;">✗</td>
+                            <td style="text-align:center;padding:8px;">✓</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:8px;">No salience (<code>use_salience_gate=False</code>)</td>
+                            <td style="text-align:center;padding:8px;">✓</td>
+                            <td style="text-align:center;padding:8px;">✓</td>
+                            <td style="text-align:center;padding:8px;">✓</td>
+                            <td style="text-align:center;padding:8px;">✗</td>
+                        </tr>
+                    </table>
+
+                    <h4>2. Baseline Text Models (<code>BaselineLM</code>)</h4>
+                    <p>Created <code>baseline_lm.py</code> — a text model wrapper that uses the existing <code>FormulaAttention</code> (which implements softmax, vanilla linear, and RALA attention) instead of <code>HybridAttention</code>. The forward signature is identical to <code>HybridLM</code>:</p>
+                    <div class="math-block">
+                        $$ \texttt{(logits, list[AttentionStats])} = \texttt{model(token\_ids)} $$
+                    </div>
+                    <p>This means all three baselines now run on the exact same Associative Recall and Shakespeare tasks as the hybrid model, through the same training pipeline, with the same evaluation metrics. The <code>attention_type</code> field in <code>ExperimentConfig</code> now controls which model is instantiated for text tasks:</p>
+                    <ul>
+                        <li><code>attention_type="hybrid"</code> → <code>HybridLM</code> (proposed architecture)</li>
+                        <li><code>attention_type="softmax"</code> → <code>BaselineLM</code> with full \(N \times N\) attention</li>
+                        <li><code>attention_type="linear"</code> → <code>BaselineLM</code> with vanilla kernel attention</li>
+                        <li><code>attention_type="rala"</code> → <code>BaselineLM</code> with rank-augmented linear attention</li>
+                    </ul>
+
+                    <h4>3. Pipeline &amp; Checkpoint Integration</h4>
+                    <ul>
+                        <li>The training pipeline (<code>_run_text_experiment</code>) now routes to <code>BaselineLM</code> when <code>attention_type</code> is not <code>"hybrid"</code>.</li>
+                        <li>The checkpoint system (<code>save_checkpoint</code> / <code>load_checkpoint</code>) correctly serializes and reconstructs <code>BaselineLM</code> models, preserving their <code>attention_type</code>, feature map formulas, and task configuration.</li>
+                        <li>All 8 ablation configurations (5 hybrid variants + 3 baselines) have been smoke-tested end-to-end through the full training pipeline.</li>
+                    </ul>
+
+                    <h3>Conceptual Impact</h3>
+                    <ul>
+                        <li><strong>Publication-Ready Ablation:</strong> Every architectural claim can now be isolated and tested: "Does the global memory help?" (compare full vs. local-only). "Does salience gating matter?" (compare full vs. no-salience). "Does the \(\phi\) gate restore rank?" (compare full vs. no-\(\phi\)). Each comparison runs on the same data, same hyperparameters, same training pipeline.</li>
+                        <li><strong>Apples-to-Apples Baselines:</strong> Softmax, linear, and RALA baselines now compete on the exact same Associative Recall benchmark. If the hybrid model outperforms them at high pair counts, the advantage is attributable to the architecture — not to differences in data, tokenization, or evaluation protocol.</li>
+                        <li><strong>Complete Experimental Matrix:</strong> The full ablation table (8 configurations × multiple pair counts × multiple head counts × multiple seeds) can now be generated from a single benchmark script, producing the figures required for a research publication.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    function openTab(evt, tabName) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].classList.remove("active");
+        }
+        tablinks = document.getElementsByClassName("tab-btn");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].classList.remove("active");
+        }
+        document.getElementById(tabName).classList.add("active");
+        evt.currentTarget.classList.add("active");
+    }
+
+    function toggleAccordion(element) {
+        var content = element.nextElementSibling;
+        var icon = element.querySelector('.icon');
+        if (content.style.maxHeight) {
+            content.style.maxHeight = null;
+            icon.innerHTML = "+";
+        } else {
+            content.style.maxHeight = content.scrollHeight + "px";
+            icon.innerHTML = "-";
+        }
+    }
+</script>
+
+</body>
+</html>

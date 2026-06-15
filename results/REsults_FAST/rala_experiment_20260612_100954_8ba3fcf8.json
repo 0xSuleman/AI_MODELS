@@ -1,0 +1,399 @@
+{
+  "config": {
+    "dataset": "cifar-10",
+    "seed": 7,
+    "batch_size": 128,
+    "epochs": 30,
+    "learning_rate": 0.0003,
+    "sample_limit": 60000,
+    "attention_type": "hybrid",
+    "kappa_formula": "elu(x) + 1",
+    "phi_formula": "linear(x)",
+    "use_alpha": true,
+    "use_output_gate": true,
+    "use_salience_gate": true,
+    "use_global": true,
+    "dim": 512,
+    "heads": 8,
+    "layers": 7,
+    "patch_size": 8,
+    "window_size": 16,
+    "mlp_ratio": 2,
+    "mode": "parallel",
+    "device": "cuda",
+    "rank_tol": 1e-05,
+    "stats_batches": 3,
+    "warmup_passes": 3,
+    "task": "image",
+    "seq_len": 128,
+    "num_pairs": 8,
+    "recall_vocab": 100
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.9426925607681274,
+      "train_acc": 0.27038000000953677,
+      "val_loss": 1.7907112499237061,
+      "val_acc": 0.34
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.7607588724136352,
+      "train_acc": 0.34298000001907347,
+      "val_loss": 1.7580644710540771,
+      "val_acc": 0.3607
+    },
+    {
+      "epoch": 3,
+      "train_loss": 1.681633352394104,
+      "train_acc": 0.37800000001907347,
+      "val_loss": 1.661194891357422,
+      "val_acc": 0.3986
+    },
+    {
+      "epoch": 4,
+      "train_loss": 1.6335151653671265,
+      "train_acc": 0.39770000001907346,
+      "val_loss": 1.5695383020401001,
+      "val_acc": 0.4225
+    },
+    {
+      "epoch": 5,
+      "train_loss": 1.5925333590316773,
+      "train_acc": 0.41415999999046327,
+      "val_loss": 1.5717536911010743,
+      "val_acc": 0.4389
+    },
+    {
+      "epoch": 6,
+      "train_loss": 1.5810048729324342,
+      "train_acc": 0.41924000001907347,
+      "val_loss": 1.589386757659912,
+      "val_acc": 0.4306
+    },
+    {
+      "epoch": 7,
+      "train_loss": 1.561395690536499,
+      "train_acc": 0.42547999999046326,
+      "val_loss": 1.500502202987671,
+      "val_acc": 0.4583
+    },
+    {
+      "epoch": 8,
+      "train_loss": 1.5594557330703736,
+      "train_acc": 0.42736000002861024,
+      "val_loss": 1.5214179605484008,
+      "val_acc": 0.4536
+    },
+    {
+      "epoch": 9,
+      "train_loss": 1.565129933128357,
+      "train_acc": 0.4293000000095367,
+      "val_loss": 1.4979626226425171,
+      "val_acc": 0.4609
+    },
+    {
+      "epoch": 10,
+      "train_loss": 1.5649805025482177,
+      "train_acc": 0.4271,
+      "val_loss": 1.6313503608703612,
+      "val_acc": 0.4231
+    },
+    {
+      "epoch": 11,
+      "train_loss": 1.599899133682251,
+      "train_acc": 0.41514000002861023,
+      "val_loss": 1.534942248916626,
+      "val_acc": 0.4458
+    },
+    {
+      "epoch": 12,
+      "train_loss": 1.6033743530273437,
+      "train_acc": 0.41300000000953674,
+      "val_loss": 1.5117217189788819,
+      "val_acc": 0.4589
+    },
+    {
+      "epoch": 13,
+      "train_loss": 1.581000542755127,
+      "train_acc": 0.42094,
+      "val_loss": 1.5646095512390137,
+      "val_acc": 0.4442
+    },
+    {
+      "epoch": 14,
+      "train_loss": 1.5315689791107179,
+      "train_acc": 0.43920000000953674,
+      "val_loss": 1.5998023975372315,
+      "val_acc": 0.4404
+    },
+    {
+      "epoch": 15,
+      "train_loss": 1.5535731113815308,
+      "train_acc": 0.43099999999046323,
+      "val_loss": 1.5215925029754638,
+      "val_acc": 0.4558
+    },
+    {
+      "epoch": 16,
+      "train_loss": 1.5522648006439208,
+      "train_acc": 0.43128000000953676,
+      "val_loss": 1.5201647830963134,
+      "val_acc": 0.4581
+    },
+    {
+      "epoch": 17,
+      "train_loss": 1.5894644453430176,
+      "train_acc": 0.41564000000953677,
+      "val_loss": 1.575364716720581,
+      "val_acc": 0.44
+    },
+    {
+      "epoch": 18,
+      "train_loss": 1.585375262260437,
+      "train_acc": 0.41854000000953673,
+      "val_loss": 1.492204575920105,
+      "val_acc": 0.4557
+    },
+    {
+      "epoch": 19,
+      "train_loss": 1.5664760424804687,
+      "train_acc": 0.4262600000190735,
+      "val_loss": 1.5509801010131836,
+      "val_acc": 0.4435
+    },
+    {
+      "epoch": 20,
+      "train_loss": 1.618855073776245,
+      "train_acc": 0.40828,
+      "val_loss": 1.7092891117095947,
+      "val_acc": 0.3672
+    },
+    {
+      "epoch": 21,
+      "train_loss": 1.6316861856842042,
+      "train_acc": 0.40238000005722047,
+      "val_loss": 1.5537345212936402,
+      "val_acc": 0.4412
+    },
+    {
+      "epoch": 22,
+      "train_loss": 1.6621988626098634,
+      "train_acc": 0.3902400000190735,
+      "val_loss": 1.7395806955337525,
+      "val_acc": 0.3571
+    },
+    {
+      "epoch": 23,
+      "train_loss": 1.6540943872451783,
+      "train_acc": 0.39370000001907346,
+      "val_loss": 1.5217210494995117,
+      "val_acc": 0.4569
+    },
+    {
+      "epoch": 24,
+      "train_loss": 1.591663433227539,
+      "train_acc": 0.41672000000953674,
+      "val_loss": 1.6192274278640748,
+      "val_acc": 0.4157
+    },
+    {
+      "epoch": 25,
+      "train_loss": 1.583235188369751,
+      "train_acc": 0.4192799999904633,
+      "val_loss": 1.5582960399627686,
+      "val_acc": 0.4431
+    },
+    {
+      "epoch": 26,
+      "train_loss": 1.5786518538665772,
+      "train_acc": 0.42476,
+      "val_loss": 1.5526828981399536,
+      "val_acc": 0.4356
+    },
+    {
+      "epoch": 27,
+      "train_loss": 1.5664594449615479,
+      "train_acc": 0.42485999999046326,
+      "val_loss": 1.5541223430633544,
+      "val_acc": 0.4413
+    },
+    {
+      "epoch": 28,
+      "train_loss": 1.6778867887115478,
+      "train_acc": 0.38612000002861024,
+      "val_loss": 1.9187608673095704,
+      "val_acc": 0.2847
+    },
+    {
+      "epoch": 29,
+      "train_loss": 1.8451445134735107,
+      "train_acc": 0.3157000000190735,
+      "val_loss": 1.6949111763000488,
+      "val_acc": 0.3883
+    },
+    {
+      "epoch": 30,
+      "train_loss": 1.7469815465545655,
+      "train_acc": 0.3540599999904633,
+      "val_loss": 1.6768396614074708,
+      "val_acc": 0.3852
+    }
+  ],
+  "per_layer_stats": [
+    {
+      "layer": 0,
+      "memory_rank": 21.0576171875,
+      "memory_rank_ratio": 0.3290252685546875,
+      "global_output_rank": 15.998372395833334,
+      "global_output_rank_ratio": 0.9998982747395834,
+      "output_rank": 16.0,
+      "output_rank_ratio": 1.0,
+      "alpha_sum_mean": null,
+      "min_denominator": null,
+      "warnings": [
+        "global_output has large magnitude values: max |x| = 8.21e+04.",
+        "combined_output has large magnitude values: max |x| = 1.63e+05.",
+        "global_output has large magnitude values: max |x| = 9.36e+04.",
+        "combined_output has large magnitude values: max |x| = 1.45e+05.",
+        "global_output has large magnitude values: max |x| = 1.03e+05.",
+        "combined_output has large magnitude values: max |x| = 1.94e+05."
+      ]
+    },
+    {
+      "layer": 1,
+      "memory_rank": 6.775390625,
+      "memory_rank_ratio": 0.105865478515625,
+      "global_output_rank": 15.89453125,
+      "global_output_rank_ratio": 0.993408203125,
+      "output_rank": 16.0,
+      "output_rank_ratio": 1.0,
+      "alpha_sum_mean": null,
+      "min_denominator": null,
+      "warnings": [
+        "global_output has large magnitude values: max |x| = 2.17e+04.",
+        "combined_output has large magnitude values: max |x| = 4.26e+04.",
+        "global_output has large magnitude values: max |x| = 1.96e+04.",
+        "combined_output has large magnitude values: max |x| = 3.88e+04.",
+        "global_output has large magnitude values: max |x| = 2.27e+04.",
+        "combined_output has large magnitude values: max |x| = 3.94e+04."
+      ]
+    },
+    {
+      "layer": 2,
+      "memory_rank": 7.4833984375,
+      "memory_rank_ratio": 0.1169281005859375,
+      "global_output_rank": 15.99609375,
+      "global_output_rank_ratio": 0.999755859375,
+      "output_rank": 16.0,
+      "output_rank_ratio": 1.0,
+      "alpha_sum_mean": null,
+      "min_denominator": null,
+      "warnings": [
+        "global_output has large magnitude values: max |x| = 1.58e+04.",
+        "combined_output has large magnitude values: max |x| = 3.16e+04.",
+        "global_output has large magnitude values: max |x| = 1.68e+04.",
+        "combined_output has large magnitude values: max |x| = 3.35e+04.",
+        "global_output has large magnitude values: max |x| = 1.95e+04.",
+        "combined_output has large magnitude values: max |x| = 3.91e+04."
+      ]
+    },
+    {
+      "layer": 3,
+      "memory_rank": 8.5537109375,
+      "memory_rank_ratio": 0.1336517333984375,
+      "global_output_rank": 15.995442708333334,
+      "global_output_rank_ratio": 0.9997151692708334,
+      "output_rank": 16.0,
+      "output_rank_ratio": 1.0,
+      "alpha_sum_mean": null,
+      "min_denominator": null,
+      "warnings": [
+        "global_output has large magnitude values: max |x| = 1.75e+04.",
+        "combined_output has large magnitude values: max |x| = 3.50e+04.",
+        "global_output has large magnitude values: max |x| = 1.79e+04.",
+        "combined_output has large magnitude values: max |x| = 3.49e+04.",
+        "global_output has large magnitude values: max |x| = 1.88e+04.",
+        "combined_output has large magnitude values: max |x| = 3.73e+04."
+      ]
+    },
+    {
+      "layer": 4,
+      "memory_rank": 9.756510416666666,
+      "memory_rank_ratio": 0.15244547526041666,
+      "global_output_rank": 15.9873046875,
+      "global_output_rank_ratio": 0.99920654296875,
+      "output_rank": 16.0,
+      "output_rank_ratio": 1.0,
+      "alpha_sum_mean": null,
+      "min_denominator": null,
+      "warnings": [
+        "global_output has large magnitude values: max |x| = 2.05e+04.",
+        "combined_output has large magnitude values: max |x| = 4.10e+04.",
+        "global_output has large magnitude values: max |x| = 1.78e+04.",
+        "combined_output has large magnitude values: max |x| = 3.56e+04.",
+        "global_output has large magnitude values: max |x| = 1.87e+04.",
+        "combined_output has large magnitude values: max |x| = 3.69e+04."
+      ]
+    },
+    {
+      "layer": 5,
+      "memory_rank": 11.343098958333334,
+      "memory_rank_ratio": 0.17723592122395834,
+      "global_output_rank": 15.996744791666666,
+      "global_output_rank_ratio": 0.9997965494791666,
+      "output_rank": 16.0,
+      "output_rank_ratio": 1.0,
+      "alpha_sum_mean": null,
+      "min_denominator": null,
+      "warnings": [
+        "global_output has large magnitude values: max |x| = 3.08e+04.",
+        "combined_output has large magnitude values: max |x| = 6.17e+04.",
+        "global_output has large magnitude values: max |x| = 3.94e+04.",
+        "combined_output has large magnitude values: max |x| = 7.88e+04.",
+        "global_output has large magnitude values: max |x| = 3.32e+04.",
+        "combined_output has large magnitude values: max |x| = 6.64e+04."
+      ]
+    },
+    {
+      "layer": 6,
+      "memory_rank": 14.948893229166666,
+      "memory_rank_ratio": 0.23357645670572916,
+      "global_output_rank": 15.99609375,
+      "global_output_rank_ratio": 0.999755859375,
+      "output_rank": 16.0,
+      "output_rank_ratio": 1.0,
+      "alpha_sum_mean": null,
+      "min_denominator": null,
+      "warnings": [
+        "global_output has large magnitude values: max |x| = 6.73e+04.",
+        "combined_output has large magnitude values: max |x| = 1.30e+05.",
+        "global_output has large magnitude values: max |x| = 6.48e+04.",
+        "combined_output has large magnitude values: max |x| = 1.26e+05.",
+        "global_output has large magnitude values: max |x| = 7.73e+04.",
+        "combined_output has large magnitude values: max |x| = 1.49e+05."
+      ]
+    }
+  ],
+  "final_stats": {
+    "layer": 0,
+    "memory_rank": 21.0576171875,
+    "memory_rank_ratio": 0.3290252685546875,
+    "global_output_rank": 15.998372395833334,
+    "global_output_rank_ratio": 0.9998982747395834,
+    "output_rank": 16.0,
+    "output_rank_ratio": 1.0,
+    "alpha_sum_mean": null,
+    "min_denominator": null,
+    "warnings": [
+      "global_output has large magnitude values: max |x| = 8.21e+04.",
+      "combined_output has large magnitude values: max |x| = 1.63e+05.",
+      "global_output has large magnitude values: max |x| = 9.36e+04.",
+      "combined_output has large magnitude values: max |x| = 1.45e+05.",
+      "global_output has large magnitude values: max |x| = 1.03e+05.",
+      "combined_output has large magnitude values: max |x| = 1.94e+05."
+    ]
+  },
+  "inference_ms": 23674.824499998067
+}

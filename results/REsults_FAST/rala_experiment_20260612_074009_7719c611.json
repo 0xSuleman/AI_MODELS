@@ -1,0 +1,399 @@
+{
+  "config": {
+    "dataset": "cifar-10",
+    "seed": 7,
+    "batch_size": 64,
+    "epochs": 30,
+    "learning_rate": 0.0003,
+    "sample_limit": 60000,
+    "attention_type": "hybrid",
+    "kappa_formula": "elu(x) + 1",
+    "phi_formula": "linear(x)",
+    "use_alpha": true,
+    "use_output_gate": true,
+    "use_salience_gate": true,
+    "use_global": true,
+    "dim": 512,
+    "heads": 8,
+    "layers": 7,
+    "patch_size": 8,
+    "window_size": 8,
+    "mlp_ratio": 2,
+    "mode": "parallel",
+    "device": "cuda",
+    "rank_tol": 5e-06,
+    "stats_batches": 3,
+    "warmup_passes": 2,
+    "task": "image",
+    "seq_len": 128,
+    "num_pairs": 8,
+    "recall_vocab": 100
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.9519867500305175,
+      "train_acc": 0.26122,
+      "val_loss": 1.952542826461792,
+      "val_acc": 0.2891
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.7852287327957153,
+      "train_acc": 0.3293,
+      "val_loss": 1.8702108242034912,
+      "val_acc": 0.3289
+    },
+    {
+      "epoch": 3,
+      "train_loss": 1.7253722505569458,
+      "train_acc": 0.3593,
+      "val_loss": 1.7087643447875978,
+      "val_acc": 0.3769
+    },
+    {
+      "epoch": 4,
+      "train_loss": 1.692891523323059,
+      "train_acc": 0.3729,
+      "val_loss": 1.7165900707244872,
+      "val_acc": 0.385
+    },
+    {
+      "epoch": 5,
+      "train_loss": 1.6777436755752564,
+      "train_acc": 0.38014,
+      "val_loss": 1.8215364036560058,
+      "val_acc": 0.3575
+    },
+    {
+      "epoch": 6,
+      "train_loss": 1.7019964754486083,
+      "train_acc": 0.37228,
+      "val_loss": 1.6960807460784912,
+      "val_acc": 0.3698
+    },
+    {
+      "epoch": 7,
+      "train_loss": 1.729908939743042,
+      "train_acc": 0.3588,
+      "val_loss": 1.6823618633270263,
+      "val_acc": 0.3997
+    },
+    {
+      "epoch": 8,
+      "train_loss": 1.6728098724365235,
+      "train_acc": 0.38268,
+      "val_loss": 1.78509661693573,
+      "val_acc": 0.3535
+    },
+    {
+      "epoch": 9,
+      "train_loss": 1.7699545455932617,
+      "train_acc": 0.3424,
+      "val_loss": 1.749319391822815,
+      "val_acc": 0.3712
+    },
+    {
+      "epoch": 10,
+      "train_loss": 1.7196498295974731,
+      "train_acc": 0.36208,
+      "val_loss": 1.7311106882095337,
+      "val_acc": 0.3675
+    },
+    {
+      "epoch": 11,
+      "train_loss": 1.753497396736145,
+      "train_acc": 0.34862,
+      "val_loss": 1.7820230113983155,
+      "val_acc": 0.3582
+    },
+    {
+      "epoch": 12,
+      "train_loss": 1.7206627536010741,
+      "train_acc": 0.363,
+      "val_loss": 1.7481898706436156,
+      "val_acc": 0.3613
+    },
+    {
+      "epoch": 13,
+      "train_loss": 1.7292655476760865,
+      "train_acc": 0.36056,
+      "val_loss": 1.7931325511932372,
+      "val_acc": 0.3484
+    },
+    {
+      "epoch": 14,
+      "train_loss": 1.7103013111495973,
+      "train_acc": 0.3671,
+      "val_loss": 1.6644320640563965,
+      "val_acc": 0.4017
+    },
+    {
+      "epoch": 15,
+      "train_loss": 1.6870034675979615,
+      "train_acc": 0.37718,
+      "val_loss": 1.8528126035690307,
+      "val_acc": 0.3608
+    },
+    {
+      "epoch": 16,
+      "train_loss": 1.6653605561065674,
+      "train_acc": 0.38236,
+      "val_loss": 1.722861430168152,
+      "val_acc": 0.3649
+    },
+    {
+      "epoch": 17,
+      "train_loss": 1.696235429840088,
+      "train_acc": 0.37376,
+      "val_loss": 1.6993724075317382,
+      "val_acc": 0.381
+    },
+    {
+      "epoch": 18,
+      "train_loss": 1.6759080577468872,
+      "train_acc": 0.38076,
+      "val_loss": 1.609324889755249,
+      "val_acc": 0.4108
+    },
+    {
+      "epoch": 19,
+      "train_loss": 1.7159846379852295,
+      "train_acc": 0.36886,
+      "val_loss": 1.697859150505066,
+      "val_acc": 0.4006
+    },
+    {
+      "epoch": 20,
+      "train_loss": 1.6653896594238282,
+      "train_acc": 0.38534,
+      "val_loss": 1.6520320978164673,
+      "val_acc": 0.4076
+    },
+    {
+      "epoch": 21,
+      "train_loss": 1.7141161930847169,
+      "train_acc": 0.3665,
+      "val_loss": 1.6944878398895264,
+      "val_acc": 0.3946
+    },
+    {
+      "epoch": 22,
+      "train_loss": 1.7004897172546387,
+      "train_acc": 0.36734,
+      "val_loss": 1.8017444759368897,
+      "val_acc": 0.3406
+    },
+    {
+      "epoch": 23,
+      "train_loss": 1.6746855584716798,
+      "train_acc": 0.38392,
+      "val_loss": 1.7652836055755616,
+      "val_acc": 0.373
+    },
+    {
+      "epoch": 24,
+      "train_loss": 1.7362568828964233,
+      "train_acc": 0.36042,
+      "val_loss": 1.7761306518554687,
+      "val_acc": 0.362
+    },
+    {
+      "epoch": 25,
+      "train_loss": 1.7911491206359864,
+      "train_acc": 0.33708,
+      "val_loss": 1.740879016494751,
+      "val_acc": 0.3669
+    },
+    {
+      "epoch": 26,
+      "train_loss": 1.7491059337234498,
+      "train_acc": 0.35056,
+      "val_loss": 1.7375408897399902,
+      "val_acc": 0.3564
+    },
+    {
+      "epoch": 27,
+      "train_loss": 1.6760946128082275,
+      "train_acc": 0.38002,
+      "val_loss": 1.649984916305542,
+      "val_acc": 0.4038
+    },
+    {
+      "epoch": 28,
+      "train_loss": 1.7333826752853394,
+      "train_acc": 0.3608,
+      "val_loss": 1.6813879104614258,
+      "val_acc": 0.393
+    },
+    {
+      "epoch": 29,
+      "train_loss": 1.70228383228302,
+      "train_acc": 0.37122,
+      "val_loss": 1.6413555492401124,
+      "val_acc": 0.4113
+    },
+    {
+      "epoch": 30,
+      "train_loss": 1.6862250804138184,
+      "train_acc": 0.37528,
+      "val_loss": 1.621679026412964,
+      "val_acc": 0.412
+    }
+  ],
+  "per_layer_stats": [
+    {
+      "layer": 0,
+      "memory_rank": 36.487630208333336,
+      "memory_rank_ratio": 0.5701192220052084,
+      "global_output_rank": 16.0,
+      "global_output_rank_ratio": 1.0,
+      "output_rank": 16.0,
+      "output_rank_ratio": 1.0,
+      "alpha_sum_mean": null,
+      "min_denominator": null,
+      "warnings": [
+        "global_output has large magnitude values: max |x| = 4.10e+05.",
+        "combined_output has large magnitude values: max |x| = 7.56e+05.",
+        "global_output has large magnitude values: max |x| = 4.39e+05.",
+        "combined_output has large magnitude values: max |x| = 7.04e+05.",
+        "global_output has large magnitude values: max |x| = 4.52e+05.",
+        "combined_output has large magnitude values: max |x| = 8.06e+05."
+      ]
+    },
+    {
+      "layer": 1,
+      "memory_rank": 21.798828125,
+      "memory_rank_ratio": 0.340606689453125,
+      "global_output_rank": 15.999348958333334,
+      "global_output_rank_ratio": 0.9999593098958334,
+      "output_rank": 16.0,
+      "output_rank_ratio": 1.0,
+      "alpha_sum_mean": null,
+      "min_denominator": null,
+      "warnings": [
+        "global_output has large magnitude values: max |x| = 3.90e+04.",
+        "combined_output has large magnitude values: max |x| = 7.72e+04.",
+        "global_output has large magnitude values: max |x| = 4.23e+04.",
+        "combined_output has large magnitude values: max |x| = 8.44e+04.",
+        "global_output has large magnitude values: max |x| = 4.59e+04.",
+        "combined_output has large magnitude values: max |x| = 8.84e+04."
+      ]
+    },
+    {
+      "layer": 2,
+      "memory_rank": 23.536458333333332,
+      "memory_rank_ratio": 0.3677571614583333,
+      "global_output_rank": 15.998046875,
+      "global_output_rank_ratio": 0.9998779296875,
+      "output_rank": 16.0,
+      "output_rank_ratio": 1.0,
+      "alpha_sum_mean": null,
+      "min_denominator": null,
+      "warnings": [
+        "global_output has large magnitude values: max |x| = 4.19e+04.",
+        "combined_output has large magnitude values: max |x| = 8.37e+04.",
+        "global_output has large magnitude values: max |x| = 4.90e+04.",
+        "combined_output has large magnitude values: max |x| = 9.78e+04.",
+        "global_output has large magnitude values: max |x| = 5.13e+04.",
+        "combined_output has large magnitude values: max |x| = 1.03e+05."
+      ]
+    },
+    {
+      "layer": 3,
+      "memory_rank": 23.75390625,
+      "memory_rank_ratio": 0.37115478515625,
+      "global_output_rank": 16.0,
+      "global_output_rank_ratio": 1.0,
+      "output_rank": 16.0,
+      "output_rank_ratio": 1.0,
+      "alpha_sum_mean": null,
+      "min_denominator": null,
+      "warnings": [
+        "global_output has large magnitude values: max |x| = 8.28e+04.",
+        "combined_output has large magnitude values: max |x| = 1.60e+05.",
+        "global_output has large magnitude values: max |x| = 8.00e+04.",
+        "combined_output has large magnitude values: max |x| = 1.49e+05.",
+        "global_output has large magnitude values: max |x| = 7.30e+04.",
+        "combined_output has large magnitude values: max |x| = 1.46e+05."
+      ]
+    },
+    {
+      "layer": 4,
+      "memory_rank": 23.67578125,
+      "memory_rank_ratio": 0.36993408203125,
+      "global_output_rank": 15.999348958333334,
+      "global_output_rank_ratio": 0.9999593098958334,
+      "output_rank": 16.0,
+      "output_rank_ratio": 1.0,
+      "alpha_sum_mean": null,
+      "min_denominator": null,
+      "warnings": [
+        "global_output has large magnitude values: max |x| = 5.47e+04.",
+        "combined_output has large magnitude values: max |x| = 1.08e+05.",
+        "global_output has large magnitude values: max |x| = 4.75e+04.",
+        "combined_output has large magnitude values: max |x| = 9.47e+04.",
+        "global_output has large magnitude values: max |x| = 5.23e+04.",
+        "combined_output has large magnitude values: max |x| = 9.41e+04."
+      ]
+    },
+    {
+      "layer": 5,
+      "memory_rank": 25.640625,
+      "memory_rank_ratio": 0.400634765625,
+      "global_output_rank": 15.996744791666666,
+      "global_output_rank_ratio": 0.9997965494791666,
+      "output_rank": 16.0,
+      "output_rank_ratio": 1.0,
+      "alpha_sum_mean": null,
+      "min_denominator": null,
+      "warnings": [
+        "global_output has large magnitude values: max |x| = 6.20e+04.",
+        "combined_output has large magnitude values: max |x| = 1.01e+05.",
+        "global_output has large magnitude values: max |x| = 5.61e+04.",
+        "combined_output has large magnitude values: max |x| = 1.03e+05.",
+        "global_output has large magnitude values: max |x| = 7.63e+04.",
+        "combined_output has large magnitude values: max |x| = 1.28e+05."
+      ]
+    },
+    {
+      "layer": 6,
+      "memory_rank": 35.748697916666664,
+      "memory_rank_ratio": 0.5585734049479166,
+      "global_output_rank": 16.0,
+      "global_output_rank_ratio": 1.0,
+      "output_rank": 16.0,
+      "output_rank_ratio": 1.0,
+      "alpha_sum_mean": null,
+      "min_denominator": null,
+      "warnings": [
+        "global_output has large magnitude values: max |x| = 2.48e+05.",
+        "combined_output has large magnitude values: max |x| = 4.33e+05.",
+        "global_output has large magnitude values: max |x| = 3.28e+05.",
+        "combined_output has large magnitude values: max |x| = 4.89e+05.",
+        "global_output has large magnitude values: max |x| = 2.56e+05.",
+        "combined_output has large magnitude values: max |x| = 4.32e+05."
+      ]
+    }
+  ],
+  "final_stats": {
+    "layer": 0,
+    "memory_rank": 36.487630208333336,
+    "memory_rank_ratio": 0.5701192220052084,
+    "global_output_rank": 16.0,
+    "global_output_rank_ratio": 1.0,
+    "output_rank": 16.0,
+    "output_rank_ratio": 1.0,
+    "alpha_sum_mean": null,
+    "min_denominator": null,
+    "warnings": [
+      "global_output has large magnitude values: max |x| = 4.10e+05.",
+      "combined_output has large magnitude values: max |x| = 7.56e+05.",
+      "global_output has large magnitude values: max |x| = 4.39e+05.",
+      "combined_output has large magnitude values: max |x| = 7.04e+05.",
+      "global_output has large magnitude values: max |x| = 4.52e+05.",
+      "combined_output has large magnitude values: max |x| = 8.06e+05."
+    ]
+  },
+  "inference_ms": 14703.71729999897
+}

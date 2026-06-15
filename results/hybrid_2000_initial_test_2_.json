@@ -1,0 +1,117 @@
+{
+  "config": {
+    "dataset": "cifar-10",
+    "seed": 7,
+    "batch_size": 64,
+    "epochs": 8,
+    "learning_rate": 0.001,
+    "sample_limit": 2000,
+    "attention_type": "hybrid",
+    "kappa_formula": "elu(x) + 1",
+    "phi_formula": "linear(x)",
+    "use_alpha": true,
+    "use_output_gate": true,
+    "dim": 96,
+    "heads": 4,
+    "layers": 2,
+    "patch_size": 2,
+    "window_size": 16,
+    "mlp_ratio": 2,
+    "mode": "parallel",
+    "device": "cpu",
+    "rank_tol": 1e-05,
+    "stats_batches": 2,
+    "warmup_passes": 0
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 2.316183895111084,
+      "train_acc": 0.1185,
+      "val_loss": 2.217660655975342,
+      "val_acc": 0.1725
+    },
+    {
+      "epoch": 2,
+      "train_loss": 2.165144485473633,
+      "train_acc": 0.195,
+      "val_loss": 2.021172580718994,
+      "val_acc": 0.255
+    },
+    {
+      "epoch": 3,
+      "train_loss": 2.0578548812866213,
+      "train_acc": 0.2245,
+      "val_loss": 1.893391227722168,
+      "val_acc": 0.2975
+    },
+    {
+      "epoch": 4,
+      "train_loss": 1.988514747619629,
+      "train_acc": 0.246,
+      "val_loss": 1.8978776168823241,
+      "val_acc": 0.28
+    },
+    {
+      "epoch": 5,
+      "train_loss": 1.969691125869751,
+      "train_acc": 0.254,
+      "val_loss": 1.8971799850463866,
+      "val_acc": 0.2675
+    },
+    {
+      "epoch": 6,
+      "train_loss": 1.942294150352478,
+      "train_acc": 0.2685,
+      "val_loss": 1.8667167949676513,
+      "val_acc": 0.3
+    },
+    {
+      "epoch": 7,
+      "train_loss": 1.8772006607055665,
+      "train_acc": 0.3105,
+      "val_loss": 1.809301767349243,
+      "val_acc": 0.335
+    },
+    {
+      "epoch": 8,
+      "train_loss": 1.885372296333313,
+      "train_acc": 0.297,
+      "val_loss": 1.8035227251052857,
+      "val_acc": 0.305
+    }
+  ],
+  "per_layer_stats": [
+    {
+      "layer": 0,
+      "kv_rank": 23.453125,
+      "kv_rank_ratio": 0.9772135416666666,
+      "output_rank": 24.0,
+      "output_rank_ratio": 1.0,
+      "alpha_sum_mean": null,
+      "min_denominator": null,
+      "warnings": []
+    },
+    {
+      "layer": 1,
+      "kv_rank": 20.2265625,
+      "kv_rank_ratio": 0.8427734375,
+      "output_rank": 24.0,
+      "output_rank_ratio": 1.0,
+      "alpha_sum_mean": null,
+      "min_denominator": null,
+      "warnings": []
+    }
+  ],
+  "final_stats": {
+    "layer": 0,
+    "kv_rank": 23.453125,
+    "kv_rank_ratio": 0.9772135416666666,
+    "output_rank": 24.0,
+    "output_rank_ratio": 1.0,
+    "alpha_sum_mean": null,
+    "min_denominator": null,
+    "warnings": []
+  },
+  "inference_ms": 481.18750600042404
+}

@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGSS Hybrid Attention — Experimental Worksheet</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0c10;--surface:#12151c;--card:#181c26;--border:#252a36;--border-light:#2e3445;--text:#c8cdd8;--text-dim:#6b7280;--text-bright:#e8ecf4;--accent:#3b82f6;--accent-dim:#1e3a5f;--green:#10b981;--green-dim:#064e3b;--amber:#f59e0b;--amber-dim:#78350f;--red:#ef4444;--red-dim:#7f1d1d;--purple:#8b5cf6;--purple-dim:#4c1d95;--cyan:#06b6d4;--pink:#ec4899;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:0;}
+.page-header{background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 50%,#172554 100%);padding:3rem 2rem;text-align:center;border-bottom:1px solid var(--border);}
+.page-header h1{font-size:2.4rem;font-weight:900;background:linear-gradient(135deg,#60a5fa,#a78bfa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-0.02em;}
+.page-header p{color:var(--text-dim);font-size:0.95rem;margin-top:0.5rem;}
+.container{max-width:1200px;margin:0 auto;padding:1.5rem 2rem 4rem;}
+/* Navigation */
+.nav{display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:2rem;padding:1rem;background:var(--surface);border-radius:12px;border:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);}
+.nav a{padding:0.5rem 1rem;border-radius:8px;color:var(--text-dim);text-decoration:none;font-size:0.78rem;font-weight:600;letter-spacing:0.03em;text-transform:uppercase;transition:all 0.2s;}
+.nav a:hover{background:var(--accent-dim);color:var(--accent);}
+/* Experiment sections */
+.experiment{background:var(--surface);border:1px solid var(--border);border-radius:16px;margin-bottom:2rem;overflow:hidden;}
+.exp-header{padding:1.25rem 1.5rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:background 0.2s;}
+.exp-header:hover{background:var(--card);}
+.exp-header h2{font-size:1.15rem;font-weight:700;color:var(--text-bright);}
+.exp-num{display:inline-block;background:var(--accent);color:#fff;font-size:0.7rem;font-weight:700;padding:0.2rem 0.6rem;border-radius:6px;margin-right:0.75rem;font-family:'JetBrains Mono';}
+.exp-body{padding:0 1.5rem 1.5rem;display:none;}
+.experiment.open .exp-body{display:block;}
+.experiment.open .exp-toggle{transform:rotate(180deg);}
+.exp-toggle{font-size:1.2rem;color:var(--text-dim);transition:transform 0.3s;}
+/* Status badge */
+.status{display:inline-block;padding:0.15rem 0.6rem;border-radius:20px;font-size:0.68rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;}
+.status-pending{background:var(--amber-dim);color:var(--amber);}
+.status-running{background:var(--accent-dim);color:var(--accent);}
+.status-done{background:var(--green-dim);color:var(--green);}
+.status-failed{background:var(--red-dim);color:var(--red);}
+/* Cards and sections */
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.25rem;margin:1rem 0;}
+.card h3{font-size:0.95rem;font-weight:700;color:var(--text-bright);margin-bottom:0.75rem;}
+.card h4{font-size:0.82rem;font-weight:600;color:var(--accent);margin:1rem 0 0.5rem;text-transform:uppercase;letter-spacing:0.05em;}
+.card p,.card li{font-size:0.87rem;color:var(--text);}
+.card ul{padding-left:1.25rem;}
+.card li{margin-bottom:0.3rem;}
+/* Info boxes */
+.info-box{padding:0.85rem 1rem;border-radius:8px;font-size:0.82rem;margin:0.75rem 0;}
+.info-blue{background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);color:#93c5fd;}
+.info-green{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);color:#6ee7b7;}
+.info-amber{background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#fcd34d;}
+.info-red{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#fca5a5;}
+.info-purple{background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.25);color:#c4b5fd;}
+/* Tables */
+table{width:100%;border-collapse:collapse;margin:0.75rem 0;font-size:0.82rem;}
+th{background:var(--bg);color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;font-size:0.7rem;padding:0.6rem 0.75rem;text-align:left;border-bottom:2px solid var(--border);}
+td{padding:0.55rem 0.75rem;border-bottom:1px solid var(--border);color:var(--text);}
+tr:hover td{background:rgba(59,130,246,0.04);}
+/* Editable cells */
+td[contenteditable="true"],div[contenteditable="true"]{outline:none;transition:background 0.2s;}
+td[contenteditable="true"]:focus,div[contenteditable="true"]:focus{background:rgba(59,130,246,0.1);box-shadow:inset 0 0 0 1px var(--accent);}
+td[contenteditable="true"]:empty::before,div[contenteditable="true"]:empty::before{content:attr(data-placeholder);color:var(--text-dim);font-style:italic;opacity:0.5;}
+/* Notes area */
+.notes{background:var(--bg);border:1px dashed var(--border-light);border-radius:8px;padding:1rem;min-height:100px;font-size:0.85rem;color:var(--text);margin:0.75rem 0;font-family:'Inter',sans-serif;line-height:1.7;}
+.notes-label{font-size:0.68rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.4rem;}
+/* Code blocks */
+code{font-family:'JetBrains Mono',monospace;background:var(--bg);padding:0.15rem 0.4rem;border-radius:4px;font-size:0.78rem;color:var(--accent);}
+pre{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:1rem;overflow-x:auto;font-size:0.78rem;margin:0.75rem 0;}
+pre code{background:none;padding:0;color:var(--text);}
+/* Claim-evidence pairs */
+.claim{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:0.75rem 0;}
+.claim-box{padding:1rem;border-radius:8px;font-size:0.82rem;}
+.claim-left{background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.2);}
+.claim-right{background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);}
+/* Grid */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;}
+@media(max-width:768px){.grid-2,.grid-3,.claim{grid-template-columns:1fr;}}
+/* Figure planning */
+.figure-plan{background:var(--bg);border:2px dashed var(--border-light);border-radius:10px;padding:1.25rem;margin:0.75rem 0;text-align:center;}
+.figure-plan .label{font-size:0.7rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.1em;}
+/* Status selector */
+select.status-select{background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:0.2rem 0.4rem;font-size:0.72rem;font-family:'JetBrains Mono';}
+/* Divider */
+hr{border:none;border-top:1px solid var(--border);margin:1.5rem 0;}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Self-Gated State Space Hybrid Attention</h1>
+  <p>Experimental Operations Worksheet — Complete Research Validation Pipeline</p>
+  <p style="margin-top:0.3rem;font-size:0.78rem;color:#4b5563;">Document Version 1.0 · Generated 2026-06-07 · All fields are editable — click to type</p>
+</div>
+
+<div class="container">
+
+<!-- ════════════════ NAVIGATION ════════════════ -->
+<div class="nav" id="nav">
+  <a href="#exp1">1 · MQAR Sweep</a>
+  <a href="#exp2">2 · Ablation Matrix</a>
+  <a href="#exp3">3 · Scaling Curve</a>
+  <a href="#exp4">4 · Recurrent Mode</a>
+  <a href="#exp5">5 · CIFAR-10</a>
+  <a href="#exp6">6 · Shakespeare</a>
+  <a href="#exp7">7 · Rank Deep Dive</a>
+  <a href="#exp8">8 · Multi-Seed</a>
+  <a href="#synthesis">Synthesis</a>
+  <a href="#figures">Figures</a>
+  <a href="#narrative">Narrative</a>
+</div>
+
+<!-- ════════════════ GLOBAL CONFIG ════════════════ -->
+<div class="card" style="border-left:3px solid var(--accent);">
+  <h3>🔧 Global Experiment Defaults</h3>
+  <p style="font-size:0.82rem;color:var(--text-dim);margin-bottom:1rem;">These are the shared default hyperparameters used across all experiments unless overridden. Edit these values to match your hardware and budget.</p>
+  <div class="grid-3">
+    <div>
+      <h4>Architecture</h4>
+      <table>
+        <tr><td>Model dim <code>D</code></td><td contenteditable="true" data-placeholder="64">64</td></tr>
+        <tr><td>Heads <code>h</code></td><td contenteditable="true" data-placeholder="4">4</td></tr>
+        <tr><td>Layers <code>L</code></td><td contenteditable="true" data-placeholder="2">2</td></tr>
+        <tr><td>Head dim <code>d = D/h</code></td><td contenteditable="true" data-placeholder="16">16</td></tr>
+        <tr><td>MLP ratio</td><td contenteditable="true" data-placeholder="2">2</td></tr>
+        <tr><td>Window size <code>w</code></td><td contenteditable="true" data-placeholder="16">16</td></tr>
+      </table>
+    </div>
+    <div>
+      <h4>Training</h4>
+      <table>
+        <tr><td>Learning rate</td><td contenteditable="true" data-placeholder="1e-3">1e-3</td></tr>
+        <tr><td>Batch size</td><td contenteditable="true" data-placeholder="64">64</td></tr>
+        <tr><td>Optimizer</td><td contenteditable="true" data-placeholder="AdamW">AdamW</td></tr>
+        <tr><td>Weight decay</td><td contenteditable="true" data-placeholder="0.01">0.01</td></tr>
+        <tr><td>Device</td><td contenteditable="true" data-placeholder="cpu">cpu</td></tr>
+        <tr><td>Default epochs</td><td contenteditable="true" data-placeholder="30">30</td></tr>
+      </table>
+    </div>
+    <div>
+      <h4>Measurement</h4>
+      <table>
+        <tr><td>SVD rank tolerance</td><td contenteditable="true" data-placeholder="1e-5">1e-5</td></tr>
+        <tr><td>Stats batches</td><td contenteditable="true" data-placeholder="3">3</td></tr>
+        <tr><td>Warmup passes</td><td contenteditable="true" data-placeholder="2">2</td></tr>
+        <tr><td>Seeds to run</td><td contenteditable="true" data-placeholder="7, 42, 123">7, 42, 123</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="notes-label" style="margin-top:1rem;">Hardware Notes</div>
+  <div class="notes" contenteditable="true" data-placeholder="Record your hardware: GPU model, VRAM, CPU cores, RAM..."></div>
+</div>
+
+
+<!-- ════════════════ EXPERIMENT 1: MQAR SWEEP ════════════════ -->
+<div class="experiment open" id="exp1">
+  <div class="exp-header" onclick="toggleExp(this)">
+    <h2><span class="exp-num">EXP 1</span> MQAR Associative Recall — Capacity Sweep
+      <select class="status-select" onclick="event.stopPropagation()">
+        <option>⏳ Pending</option><option>🔄 Running</option><option>✅ Done</option><option>❌ Failed</option>
+      </select>
+    </h2>
+    <span class="exp-toggle">▼</span>
+  </div>
+  <div class="exp-body">
+
+    <div class="card">
+      <h3>Purpose & Hypothesis</h3>
+      <p>This is the <strong>primary diagnostic experiment</strong>. The MQAR (Multi-Query Associative Recall) task forces the model to memorize N completely random key→value pairs and retrieve a specific value when queried. Because the data is random, statistical shortcuts are impossible — the model <em>must</em> store and retrieve from its d×d global memory matrix.</p>
+      <div class="info-blue">
+        <strong>Core Hypothesis:</strong> The hybrid model's memory capacity scales with h × d² (number of heads × head dimension squared). As we increase num_pairs beyond d², accuracy should degrade — but increasing h should restore it. This directly validates the architectural claim.
+      </div>
+      <div class="info-purple">
+        <strong>What This Proves:</strong> If the model achieves high recall accuracy at pair counts approaching d², it mathematically proves that the salience-gated global memory is functioning as a genuine associative memory — not just a smoothed average. This is the single most important result for the paper.
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Exact Parameters</h3>
+      <table>
+        <tr><th>Parameter</th><th>Values</th><th>Notes</th></tr>
+        <tr><td><code>task</code></td><td><code>"recall"</code></td><td>Fixed</td></tr>
+        <tr><td><code>attention_type</code></td><td><code>"hybrid"</code></td><td>Full hybrid model</td></tr>
+        <tr><td><code>num_pairs</code></td><td contenteditable="true">2, 4, 8, 16, 32, 64</td><td>Sweep axis 1 — memory pressure</td></tr>
+        <tr><td><code>heads</code></td><td contenteditable="true">1, 2, 4, 8</td><td>Sweep axis 2 — memory capacity</td></tr>
+        <tr><td><code>dim</code></td><td contenteditable="true">64</td><td>Keep fixed to isolate head effect</td></tr>
+        <tr><td><code>layers</code></td><td contenteditable="true">2</td><td>Keep small to isolate attention</td></tr>
+        <tr><td><code>recall_vocab</code></td><td contenteditable="true">100</td><td>Token vocabulary for recall</td></tr>
+        <tr><td><code>sample_limit</code></td><td contenteditable="true">10000</td><td>Training samples</td></tr>
+        <tr><td><code>epochs</code></td><td contenteditable="true">30</td><td>Enough for convergence</td></tr>
+        <tr><td><code>seq_len</code></td><td>Auto (2×num_pairs+1)</td><td>Computed by dataset</td></tr>
+        <tr><td><code>seeds</code></td><td contenteditable="true">7, 42, 123</td><td>3 seeds for mean±std</td></tr>
+      </table>
+      <div class="info-amber"><strong>Total runs:</strong> 6 pair counts × 4 head counts × 4 models × 3 seeds = <strong>288 runs</strong>. Estimate ~2-5 min each on CPU.</div>
+    </div>
+
+    <div class="card">
+      <h3>ExperimentConfig Code</h3>
+      <pre><code>from rala_lab.training import ExperimentConfig, run_experiment
+
+config = ExperimentConfig(
+    task="recall",
+    attention_type="hybrid",
+    num_pairs=8,        # sweep: [2, 4, 8, 16, 32, 64]
+    heads=4,            # sweep: [1, 2, 4, 8]
+    dim=64,
+    layers=2,
+    recall_vocab=100,
+    sample_limit=10000,
+    epochs=30,
+    batch_size=64,
+    learning_rate=1e-3,
+    seed=7,             # sweep: [7, 42, 123]
+)
+result = run_experiment(config)</code></pre>
+    </div>
+
+    <div class="card">
+      <h3>🔵 HYBRID — Validation Accuracy (mean ± std across seeds)</h3>
+      <p style="font-size:0.78rem;color:var(--text-dim);">Fill each cell with: <code>mean ± std</code> (e.g., <code>0.95 ± 0.02</code>). The heatmap pattern should show high accuracy (green) in bottom-left, degradation (red) in top-right.</p>
+      <table>
+        <tr><th>num_pairs ↓ \ heads →</th><th>h=1</th><th>h=2</th><th>h=4</th><th>h=8</th></tr>
+        <tr><td><strong>2 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>4 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>8 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>16 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>32 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>64 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>🟢 SOFTMAX BASELINE — Validation Accuracy (mean ± std across seeds)</h3>
+      <p style="font-size:0.78rem;color:var(--text-dim);">Expected: near-perfect accuracy everywhere (O(N²) full memory). This is the gold standard ceiling.</p>
+      <table>
+        <tr><th>num_pairs ↓ \ heads →</th><th>h=1</th><th>h=2</th><th>h=4</th><th>h=8</th></tr>
+        <tr><td><strong>2 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>4 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>8 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>16 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>32 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>64 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>🔴 LINEAR BASELINE — Validation Accuracy (mean ± std across seeds)</h3>
+      <p style="font-size:0.78rem;color:var(--text-dim);">Expected: fast degradation as num_pairs grows — demonstrates rank collapse without augmentation.</p>
+      <table>
+        <tr><th>num_pairs ↓ \ heads →</th><th>h=1</th><th>h=2</th><th>h=4</th><th>h=8</th></tr>
+        <tr><td><strong>2 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>4 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>8 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>16 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>32 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>64 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>🟡 RALA BASELINE — Validation Accuracy (mean ± std across seeds)</h3>
+      <p style="font-size:0.78rem;color:var(--text-dim);">Expected: better than vanilla Linear (rank augmentation helps), but weaker than Hybrid (no local window or gating).</p>
+      <table>
+        <tr><th>num_pairs ↓ \ heads →</th><th>h=1</th><th>h=2</th><th>h=4</th><th>h=8</th></tr>
+        <tr><td><strong>2 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>4 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>8 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>16 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>32 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>64 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+      </table>
+    </div>
+
+    <hr>
+    <div class="card">
+      <h3>Result Logging — Hybrid Validation Loss (mean ± std)</h3>
+      <table>
+        <tr><th>num_pairs ↓ \ heads →</th><th>h=1</th><th>h=2</th><th>h=4</th><th>h=8</th></tr>
+        <tr><td><strong>2 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>4 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>8 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>16 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>32 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>64 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Result Logging — Hybrid Memory Rank Ratio (mean across seeds)</h3>
+      <table>
+        <tr><th>num_pairs ↓ \ heads →</th><th>h=1</th><th>h=2</th><th>h=4</th><th>h=8</th></tr>
+        <tr><td><strong>2 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>4 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>8 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>16 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>32 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>64 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Result Logging — Hybrid Output Rank Ratio (mean across seeds)</h3>
+      <table>
+        <tr><th>num_pairs ↓ \ heads →</th><th>h=1</th><th>h=2</th><th>h=4</th><th>h=8</th></tr>
+        <tr><td><strong>2 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>4 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>8 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>16 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>32 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>64 pairs</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Analysis Questions — Answer After Results</h3>
+      <div class="info-purple"><strong>Q1:</strong> At what num_pairs does accuracy first drop below 90%? Does increasing heads recover it?</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer Q1 here..."></div>
+      <div class="info-purple"><strong>Q2:</strong> Does the memory rank ratio correlate with accuracy? (High rank = high accuracy?)</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer Q2 here..."></div>
+      <div class="info-purple"><strong>Q3:</strong> What is the empirical capacity limit? How does it compare to the theoretical d² = (D/h)²?</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer Q3 here..."></div>
+      <div class="info-purple"><strong>Q4:</strong> Is there a clear 'phase transition' (accuracy suddenly collapses) or gradual degradation?</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer Q4 here..."></div>
+    </div>
+
+    <div class="figure-plan">
+      <div class="label">📊 Target Paper Figure: 4-Panel Heatmap Comparison</div>
+      <p style="font-size:0.82rem;color:var(--text-dim);margin-top:0.5rem;">4 side-by-side heatmaps (Hybrid vs Softmax vs Linear vs RALA). X-axis: heads (h), Y-axis: num_pairs. Color: validation accuracy. Hybrid should match Softmax (all green) while Linear/RALA degrade.</p>
+    </div>
+
+    <div class="notes-label">Experiment 1 — Free-Form Notes & Observations</div>
+    <div class="notes" contenteditable="true" data-placeholder="Record any observations, anomalies, unexpected results, training instabilities, timing notes..."></div>
+  </div>
+</div>
+
+<!-- ════════════════ EXPERIMENT 2: ABLATION MATRIX ════════════════ -->
+<div class="experiment" id="exp2">
+  <div class="exp-header" onclick="toggleExp(this)">
+    <h2><span class="exp-num">EXP 2</span> Full Ablation Matrix on Associative Recall
+      <select class="status-select" onclick="event.stopPropagation()">
+        <option>⏳ Pending</option><option>🔄 Running</option><option>✅ Done</option><option>❌ Failed</option>
+      </select>
+    </h2>
+    <span class="exp-toggle">▼</span>
+  </div>
+  <div class="exp-body">
+
+    <div class="card">
+      <h3>Purpose & Hypothesis</h3>
+      <p>This experiment isolates the contribution of each architectural component. The full model must beat every ablation — otherwise the component being ablated is not contributing. We also compare against external baselines (softmax, linear, RALA).</p>
+      <div class="info-blue"><strong>Core Hypothesis:</strong> Full Hybrid > every ablation variant > vanilla linear attention. Softmax should be a strong baseline at low pair counts but the hybrid should match or beat it everywhere while being more efficient.</div>
+      <div class="info-amber"><strong>Critical Test:</strong> If "no salience gate" or "no φ gate" performs equally well, that component is <em>not contributing</em> and should be removed from the architecture or the claim must be weakened.</div>
+    </div>
+
+    <div class="card">
+      <h3>The 8 Configurations</h3>
+      <table>
+        <tr><th>#</th><th>Config Name</th><th><code>attention_type</code></th><th><code>use_global</code></th><th><code>window_size</code></th><th><code>use_output_gate</code></th><th><code>use_salience_gate</code></th></tr>
+        <tr><td>1</td><td><strong>Full Hybrid</strong></td><td>hybrid</td><td>True</td><td>16</td><td>True</td><td>True</td></tr>
+        <tr><td>2</td><td>Global Only</td><td>hybrid</td><td>True</td><td>0</td><td>True</td><td>True</td></tr>
+        <tr><td>3</td><td>Local Only</td><td>hybrid</td><td>False</td><td>16</td><td>True</td><td>True</td></tr>
+        <tr><td>4</td><td>No φ Gate</td><td>hybrid</td><td>True</td><td>16</td><td>False</td><td>True</td></tr>
+        <tr><td>5</td><td>No Salience</td><td>hybrid</td><td>True</td><td>16</td><td>True</td><td>False</td></tr>
+        <tr><td>6</td><td>Softmax Baseline</td><td>softmax</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td>7</td><td>Linear Baseline</td><td>linear</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td>8</td><td>RALA Baseline</td><td>rala</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Fixed Parameters for All Runs</h3>
+      <table>
+        <tr><th>Parameter</th><th>Value</th></tr>
+        <tr><td><code>num_pairs</code></td><td contenteditable="true">8</td></tr>
+        <tr><td><code>dim</code></td><td contenteditable="true">64</td></tr>
+        <tr><td><code>heads</code></td><td contenteditable="true">4</td></tr>
+        <tr><td><code>layers</code></td><td contenteditable="true">2</td></tr>
+        <tr><td><code>recall_vocab</code></td><td contenteditable="true">100</td></tr>
+        <tr><td><code>sample_limit</code></td><td contenteditable="true">10000</td></tr>
+        <tr><td><code>epochs</code></td><td contenteditable="true">30</td></tr>
+        <tr><td><code>seeds</code></td><td contenteditable="true">7, 42, 123</td></tr>
+      </table>
+      <div class="info-amber"><strong>Total runs:</strong> 8 configs × 3 seeds = <strong>24 runs</strong></div>
+    </div>
+
+    <div class="card">
+      <h3>Code Template</h3>
+      <pre><code># Example: Full Hybrid
+cfg_full = ExperimentConfig(task="recall", attention_type="hybrid",
+    num_pairs=8, dim=64, heads=4, layers=2, recall_vocab=100,
+    sample_limit=10000, epochs=30, seed=7)
+
+# Example: Local Only ablation
+cfg_local = ExperimentConfig(task="recall", attention_type="hybrid",
+    num_pairs=8, dim=64, heads=4, layers=2, recall_vocab=100,
+    sample_limit=10000, epochs=30, seed=7, use_global=False)
+
+# Example: Softmax baseline
+cfg_soft = ExperimentConfig(task="recall", attention_type="softmax",
+    num_pairs=8, dim=64, heads=4, layers=2, recall_vocab=100,
+    sample_limit=10000, epochs=30, seed=7)</code></pre>
+    </div>
+
+    <div class="card">
+      <h3>Result Logging — Primary Metrics (mean ± std at num_pairs=8)</h3>
+      <table>
+        <tr><th>Configuration</th><th>Val Accuracy</th><th>Val Loss</th><th>Memory Rank Ratio</th><th>Output Rank Ratio</th><th>Inference (ms)</th><th>Params</th></tr>
+        <tr><td><strong>Full Hybrid</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>Global Only</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>Local Only</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>No φ Gate</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>No Salience</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>Softmax</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="n/a"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>Linear</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>RALA</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Extended Ablation — Multiple Pair Counts</h3>
+      <p style="font-size:0.78rem;color:var(--text-dim);">If time permits, run the ablation at higher pair counts to see where ablations diverge.</p>
+      <table>
+        <tr><th>Configuration</th><th>4 pairs</th><th>8 pairs</th><th>16 pairs</th><th>32 pairs</th></tr>
+        <tr><td><strong>Full Hybrid</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>Global Only</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>Local Only</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>No φ Gate</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>No Salience</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>Softmax</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>Linear</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>RALA</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Analysis Questions</h3>
+      <div class="info-purple"><strong>Q1:</strong> Does Full Hybrid beat ALL ablations? If not, which component is redundant?</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer here..."></div>
+      <div class="info-purple"><strong>Q2:</strong> Does Hybrid beat Softmax? At what pair count does the advantage appear?</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer here..."></div>
+      <div class="info-purple"><strong>Q3:</strong> How much does removing the salience gate hurt? Is it the most or least important component?</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer here..."></div>
+      <div class="info-purple"><strong>Q4:</strong> Does the φ gate visibly improve output rank ratio compared to "No φ Gate"?</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer here..."></div>
+      <div class="info-purple"><strong>Q5:</strong> Does Hybrid beat vanilla Linear by a large margin? This is the minimum bar for the paper.</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer here..."></div>
+    </div>
+
+    <div class="claim">
+      <div class="claim-box claim-left"><strong>Paper Claim:</strong> "Each component contributes measurably. Removing any single component degrades recall accuracy."</div>
+      <div class="claim-box claim-right"><strong>Evidence Required:</strong> Full > Global-only, Full > Local-only, Full > No-φ, Full > No-salience, all with statistical significance (non-overlapping error bars).</div>
+    </div>
+
+    <div class="figure-plan">
+      <div class="label">📊 Target Paper Figure: Grouped Bar Chart</div>
+      <p style="font-size:0.82rem;color:var(--text-dim);margin-top:0.5rem;">X-axis: 8 configurations. Y-axis: validation accuracy. Error bars: ±1 std across seeds.</p>
+    </div>
+
+    <div class="notes-label">Experiment 2 — Free-Form Notes</div>
+    <div class="notes" contenteditable="true" data-placeholder="Observations, surprises, things to investigate further..."></div>
+  </div>
+</div>
+
+<!-- ════════════════ EXPERIMENT 3: SCALING CURVE ════════════════ -->
+<div class="experiment" id="exp3">
+  <div class="exp-header" onclick="toggleExp(this)">
+    <h2><span class="exp-num">EXP 3</span> Scaling Curve — Time & Memory vs Sequence Length
+      <select class="status-select" onclick="event.stopPropagation()">
+        <option>⏳ Pending</option><option>🔄 Running</option><option>✅ Done</option><option>❌ Failed</option>
+      </select>
+    </h2>
+    <span class="exp-toggle">▼</span>
+  </div>
+  <div class="exp-body">
+
+    <div class="card">
+      <h3>Purpose & Hypothesis</h3>
+      <p>Measure wall-clock inference time and peak memory as sequence length N grows. This validates the O(Nd²) linear complexity claim against O(N²d) softmax.</p>
+      <div class="info-blue"><strong>Expected:</strong> Softmax time grows quadratically (2× tokens → 4× time). Hybrid grows linearly (2× tokens → 2× time). The curves should visibly diverge after N ≈ 256.</div>
+      <div class="info-amber"><strong>Method:</strong> Forward pass only (no training). Use <code>torch.no_grad()</code>. Warmup 3 passes, then time 10 passes and average. Report in milliseconds.</div>
+    </div>
+
+    <div class="card">
+      <h3>Parameters</h3>
+      <table>
+        <tr><th>Parameter</th><th>Values</th></tr>
+        <tr><td>Sequence lengths N</td><td contenteditable="true">64, 128, 256, 512, 1024, 2048</td></tr>
+        <tr><td>Models to compare</td><td>Hybrid (full), Softmax, Linear, RALA</td></tr>
+        <tr><td><code>dim</code></td><td contenteditable="true">64</td></tr>
+        <tr><td><code>heads</code></td><td contenteditable="true">4</td></tr>
+        <tr><td><code>layers</code></td><td contenteditable="true">2</td></tr>
+        <tr><td>Batch size</td><td contenteditable="true">1</td></tr>
+        <tr><td>Warmup passes</td><td contenteditable="true">3</td></tr>
+        <tr><td>Timed passes</td><td contenteditable="true">10</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Result Logging — Inference Time (ms, mean of 10 passes)</h3>
+      <table>
+        <tr><th>N ↓ \ Model →</th><th>Hybrid</th><th>Softmax</th><th>Linear</th><th>RALA</th></tr>
+        <tr><td><strong>64</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>128</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>256</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>512</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>1024</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>2048</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Result Logging — Peak Memory (MB, if measurable)</h3>
+      <table>
+        <tr><th>N ↓ \ Model →</th><th>Hybrid</th><th>Softmax</th><th>Linear</th><th>RALA</th></tr>
+        <tr><td><strong>64</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>128</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>256</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>512</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>1024</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>2048</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Analysis Questions</h3>
+      <div class="info-purple"><strong>Q1:</strong> Does the Hybrid curve look linear? Compute ratio: time(2048)/time(64). If linear, ratio ≈ 32. If quadratic, ratio ≈ 1024.</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer..."></div>
+      <div class="info-purple"><strong>Q2:</strong> At what N does Hybrid become faster than Softmax? Is it within our test range?</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer..."></div>
+      <div class="info-purple"><strong>Q3:</strong> How does Hybrid compare to vanilla Linear? The local window adds overhead — how much?</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer..."></div>
+    </div>
+
+    <div class="figure-plan">
+      <div class="label">📊 Target Paper Figure: Log-Log Line Plot</div>
+      <p style="font-size:0.82rem;color:var(--text-dim);margin-top:0.5rem;">X-axis: sequence length N (log). Y-axis: inference time ms (log). 4 lines: Hybrid, Softmax, Linear, RALA. Slope=1 is linear, slope=2 is quadratic.</p>
+    </div>
+
+    <div class="notes-label">Experiment 3 — Free-Form Notes</div>
+    <div class="notes" contenteditable="true" data-placeholder="Notes..."></div>
+  </div>
+</div>
+
+<!-- ════════════════ EXPERIMENT 4: RECURRENT MODE ════════════════ -->
+<div class="experiment" id="exp4">
+  <div class="exp-header" onclick="toggleExp(this)">
+    <h2><span class="exp-num">EXP 4</span> Recurrent vs Parallel Mode Validation
+      <select class="status-select" onclick="event.stopPropagation()">
+        <option>⏳ Pending</option><option>🔄 Running</option><option>✅ Done</option><option>❌ Failed</option>
+      </select>
+    </h2>
+    <span class="exp-toggle">▼</span>
+  </div>
+  <div class="exp-body">
+
+    <div class="card">
+      <h3>Purpose & Hypothesis</h3>
+      <p>The architecture claims dual-mode operation: parallel (training) and recurrent (streaming inference). We must prove recurrent mode does not degrade accuracy significantly compared to parallel mode on the same trained weights.</p>
+      <div class="info-blue"><strong>Method:</strong> Train in parallel mode, then evaluate the same checkpoint in both parallel and recurrent mode. Compare accuracy and output rank.</div>
+      <div class="info-amber"><strong>Acceptable degradation:</strong> Recurrent accuracy within 5% of parallel is acceptable. Beyond 10% is a problem that needs investigation.</div>
+    </div>
+
+    <div class="card">
+      <h3>Parameters</h3>
+      <table>
+        <tr><th>Parameter</th><th>Value</th></tr>
+        <tr><td>Training mode</td><td><code>parallel</code></td></tr>
+        <tr><td>Eval modes</td><td><code>parallel</code>, <code>recurrent</code></td></tr>
+        <tr><td>Tasks</td><td>Recall (8 pairs), Shakespeare</td></tr>
+        <tr><td>Architecture</td><td contenteditable="true">D=64, h=4, L=2</td></tr>
+        <tr><td>Training epochs</td><td contenteditable="true">30</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Result Logging — Recall Task</h3>
+      <table>
+        <tr><th>Eval Mode</th><th>Val Accuracy</th><th>Val Loss</th><th>Memory Rank Ratio</th><th>Output Rank Ratio</th><th>Inference (ms)</th></tr>
+        <tr><td><strong>Parallel</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>Recurrent</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><em>Δ (difference)</em></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Result Logging — Shakespeare Task</h3>
+      <table>
+        <tr><th>Eval Mode</th><th>Perplexity</th><th>Next-Char Acc</th><th>Val Loss</th><th>Output Rank Ratio</th><th>Inference (ms)</th></tr>
+        <tr><td><strong>Parallel</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><strong>Recurrent</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td><em>Δ (difference)</em></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Analysis Questions</h3>
+      <div class="info-purple"><strong>Q1:</strong> Is recurrent accuracy within 5% of parallel? If not, what is the degradation?</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer..."></div>
+      <div class="info-purple"><strong>Q2:</strong> Does recurrent mode produce different rank ratios? (It uses γ_t decay instead of full-sequence softmax)</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer..."></div>
+      <div class="info-purple"><strong>Q3:</strong> Is recurrent mode faster for single-token inference? (It should be O(d²) per step)</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer..."></div>
+    </div>
+
+    <div class="notes-label">Experiment 4 — Free-Form Notes</div>
+    <div class="notes" contenteditable="true" data-placeholder="Notes..."></div>
+  </div>
+</div>
+
+<!-- ════════════════ EXPERIMENT 5: CIFAR-10 ════════════════ -->
+<div class="experiment" id="exp5">
+  <div class="exp-header" onclick="toggleExp(this)">
+    <h2><span class="exp-num">EXP 5</span> CIFAR-10 Image Classification — Supporting Validation
+      <select class="status-select" onclick="event.stopPropagation()">
+        <option>⏳ Pending</option><option>🔄 Running</option><option>✅ Done</option><option>❌ Failed</option>
+      </select>
+    </h2>
+    <span class="exp-toggle">▼</span>
+  </div>
+  <div class="exp-body">
+
+    <div class="card">
+      <h3>Purpose</h3>
+      <p>Secondary validation on a real-world image task. Not the primary evidence, but demonstrates the architecture works on natural data beyond synthetic benchmarks. Compare Hybrid vs Softmax vs Linear vs RALA on CIFAR-10 classification.</p>
+      <div class="info-blue"><strong>Goal:</strong> Hybrid should match or exceed softmax accuracy while using less compute. Even matching softmax is a win because of the linear complexity.</div>
+    </div>
+
+    <div class="card">
+      <h3>Parameters</h3>
+      <table>
+        <tr><th>Parameter</th><th>Value</th></tr>
+        <tr><td>Dataset</td><td>CIFAR-10</td></tr>
+        <tr><td><code>sample_limit</code></td><td contenteditable="true">5000</td></tr>
+        <tr><td><code>dim</code></td><td contenteditable="true">64</td></tr>
+        <tr><td><code>heads</code></td><td contenteditable="true">4</td></tr>
+        <tr><td><code>layers</code></td><td contenteditable="true">4</td></tr>
+        <tr><td><code>patch_size</code></td><td contenteditable="true">4</td></tr>
+        <tr><td><code>epochs</code></td><td contenteditable="true">30</td></tr>
+        <tr><td><code>seeds</code></td><td contenteditable="true">7, 42, 123</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Result Logging (mean ± std)</h3>
+      <table>
+        <tr><th>Model</th><th>Val Accuracy</th><th>Val Loss</th><th>Memory Rank Ratio</th><th>Output Rank Ratio</th><th>Inference (ms)</th><th>Params</th></tr>
+        <tr><td><strong>Hybrid</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>Softmax</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="n/a"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>Linear</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>RALA</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Analysis</h3>
+      <div class="info-purple"><strong>Q1:</strong> Does Hybrid match softmax accuracy? Within what margin?</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer..."></div>
+      <div class="info-purple"><strong>Q2:</strong> Does Hybrid beat vanilla linear? By how much?</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer..."></div>
+    </div>
+
+    <div class="notes-label">Experiment 5 — Notes</div>
+    <div class="notes" contenteditable="true" data-placeholder="Notes..."></div>
+  </div>
+</div>
+
+<!-- ════════════════ EXPERIMENT 6: SHAKESPEARE ════════════════ -->
+<div class="experiment" id="exp6">
+  <div class="exp-header" onclick="toggleExp(this)">
+    <h2><span class="exp-num">EXP 6</span> Shakespeare Language Modeling — Perplexity Comparison
+      <select class="status-select" onclick="event.stopPropagation()">
+        <option>⏳ Pending</option><option>🔄 Running</option><option>✅ Done</option><option>❌ Failed</option>
+      </select>
+    </h2>
+    <span class="exp-toggle">▼</span>
+  </div>
+  <div class="exp-body">
+
+    <div class="card">
+      <h3>Purpose</h3>
+      <p>Test on natural language (character-level LM). Validates that the forget gate γ_t and local window handle real sequential structure — grammar, punctuation, and contextual flow. Metric: <strong>perplexity</strong> (lower = better).</p>
+      <div class="info-blue"><strong>Goal:</strong> Hybrid perplexity should be competitive with softmax. Even slightly higher perplexity is acceptable if accompanied by faster inference and better scaling.</div>
+    </div>
+
+    <div class="card">
+      <h3>Parameters</h3>
+      <table>
+        <tr><th>Parameter</th><th>Value</th></tr>
+        <tr><td>Task</td><td><code>"shakespeare"</code></td></tr>
+        <tr><td><code>seq_len</code></td><td contenteditable="true">128</td></tr>
+        <tr><td><code>sample_limit</code></td><td contenteditable="true">0 (all data)</td></tr>
+        <tr><td><code>dim</code></td><td contenteditable="true">64</td></tr>
+        <tr><td><code>heads</code></td><td contenteditable="true">4</td></tr>
+        <tr><td><code>layers</code></td><td contenteditable="true">2</td></tr>
+        <tr><td><code>epochs</code></td><td contenteditable="true">30</td></tr>
+        <tr><td><code>seeds</code></td><td contenteditable="true">7, 42, 123</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Result Logging (mean ± std)</h3>
+      <table>
+        <tr><th>Model</th><th>Perplexity</th><th>Next-Char Acc</th><th>Val Loss</th><th>Output Rank Ratio</th><th>Inference (ms)</th></tr>
+        <tr><td><strong>Hybrid</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>Softmax</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>Linear</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>RALA</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Extended: Context Window Scaling</h3>
+      <p style="font-size:0.78rem;color:var(--text-dim);">Run Hybrid at different seq_len to see if longer context improves perplexity (it should).</p>
+      <table>
+        <tr><th>seq_len</th><th>Perplexity</th><th>Val Acc</th><th>Inference (ms)</th></tr>
+        <tr><td>32</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>64</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>128</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>256</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>512</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Analysis</h3>
+      <div class="info-purple"><strong>Q1:</strong> Is Hybrid perplexity within 10% of softmax? Can we claim "competitive"?</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer..."></div>
+      <div class="info-purple"><strong>Q2:</strong> Does perplexity improve with longer context? Does the global memory help for long-range dependencies?</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer..."></div>
+    </div>
+
+    <div class="notes-label">Experiment 6 — Notes</div>
+    <div class="notes" contenteditable="true" data-placeholder="Notes..."></div>
+  </div>
+</div>
+
+<!-- ════════════════ EXPERIMENT 7: RANK DEEP DIVE ════════════════ -->
+<div class="experiment" id="exp7">
+  <div class="exp-header" onclick="toggleExp(this)">
+    <h2><span class="exp-num">EXP 7</span> Rank Diagnostics Deep Dive
+      <select class="status-select" onclick="event.stopPropagation()">
+        <option>⏳ Pending</option><option>🔄 Running</option><option>✅ Done</option><option>❌ Failed</option>
+      </select>
+    </h2>
+    <span class="exp-toggle">▼</span>
+  </div>
+  <div class="exp-body">
+
+    <div class="card">
+      <h3>Purpose</h3>
+      <p>Deep dive into the rank metrics to prove the φ gate's rank-restoration property. Compare per-layer <strong>memory rank ratio</strong>, <strong>global output rank ratio</strong>, and <strong>final output rank ratio</strong> across configurations.</p>
+      <div class="info-blue"><strong>Key prediction:</strong> Memory rank ratio < 1.0 (global memory bottleneck). Global output rank ≤ memory rank. But final output rank ≈ 1.0 (φ gate restores it). Without φ gate, output rank ≈ global output rank (no restoration).</div>
+    </div>
+
+    <div class="card">
+      <h3>Result Logging — Per-Layer Metrics (Full Hybrid, recall task)</h3>
+      <table>
+        <tr><th>Layer</th><th>Memory Rank</th><th>Memory Rank Ratio</th><th>Global Output Rank</th><th>Global Output Ratio</th><th>Output Rank</th><th>Output Ratio</th></tr>
+        <tr><td>L1</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>L2</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>L3</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>L4</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Result Logging — No φ Gate (same task)</h3>
+      <table>
+        <tr><th>Layer</th><th>Memory Rank Ratio</th><th>Global Output Ratio</th><th>Output Ratio</th></tr>
+        <tr><td>L1</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>L2</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>L3</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>L4</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Analysis</h3>
+      <div class="info-purple"><strong>Q1:</strong> Is output rank ratio consistently higher than global output rank ratio? That proves φ is adding rank.</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer..."></div>
+      <div class="info-purple"><strong>Q2:</strong> Without φ gate, does output rank collapse toward global output rank? That proves φ is necessary.</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer..."></div>
+      <div class="info-purple"><strong>Q3:</strong> Which layer has the lowest rank? Is there a consistent bottleneck pattern?</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer..."></div>
+    </div>
+
+    <div class="figure-plan">
+      <div class="label">📊 Target Paper Figure: Grouped Bar Chart (Per-Layer)</div>
+      <p style="font-size:0.82rem;color:var(--text-dim);margin-top:0.5rem;">X: Layer. 3 bars per layer: Memory Rank Ratio, Global Output Rank Ratio, Final Output Rank Ratio. Horizontal line at 1.0 (full rank).</p>
+    </div>
+
+    <div class="notes-label">Experiment 7 — Notes</div>
+    <div class="notes" contenteditable="true" data-placeholder="Notes..."></div>
+  </div>
+</div>
+
+<!-- ════════════════ EXPERIMENT 8: MULTI-SEED ════════════════ -->
+<div class="experiment" id="exp8">
+  <div class="exp-header" onclick="toggleExp(this)">
+    <h2><span class="exp-num">EXP 8</span> Multi-Seed Statistical Rigor
+      <select class="status-select" onclick="event.stopPropagation()">
+        <option>⏳ Pending</option><option>🔄 Running</option><option>✅ Done</option><option>❌ Failed</option>
+      </select>
+    </h2>
+    <span class="exp-toggle">▼</span>
+  </div>
+  <div class="exp-body">
+
+    <div class="card">
+      <h3>Purpose</h3>
+      <p>Run key experiments with 3+ seeds to compute mean ± standard deviation. This is required for any publishable result. A result from a single seed can be a fluke.</p>
+      <div class="info-amber"><strong>Minimum standard:</strong> 3 seeds for conference papers (NeurIPS, ICML). 5 seeds for stronger claims. Report mean ± std in all tables.</div>
+    </div>
+
+    <div class="card">
+      <h3>Raw Per-Seed Results (Recall, num_pairs=8, Full Hybrid)</h3>
+      <table>
+        <tr><th>Seed</th><th>Val Accuracy</th><th>Val Loss</th><th>Memory Rank Ratio</th><th>Output Rank Ratio</th></tr>
+        <tr><td>7</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>42</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>123</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>256</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td>999</td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr style="background:var(--accent-dim);"><td><strong>Mean ± Std</strong></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Variance Analysis</h3>
+      <div class="info-purple"><strong>Q1:</strong> Is variance low enough for claims? (std < 0.05 for accuracy is ideal)</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer..."></div>
+      <div class="info-purple"><strong>Q2:</strong> Are there any outlier seeds? If one seed is dramatically different, investigate why.</div>
+      <div class="notes" contenteditable="true" data-placeholder="Answer..."></div>
+    </div>
+
+    <div class="notes-label">Experiment 8 — Notes</div>
+    <div class="notes" contenteditable="true" data-placeholder="Notes..."></div>
+  </div>
+</div>
+
+<!-- ════════════════ SYNTHESIS ════════════════ -->
+<div class="experiment" id="synthesis" style="border-color:var(--purple);">
+  <div class="exp-header" onclick="toggleExp(this)" style="border-left:3px solid var(--purple);">
+    <h2><span class="exp-num" style="background:var(--purple);">SYN</span> Synthesis — Claim → Evidence Mapping
+      <select class="status-select" onclick="event.stopPropagation()">
+        <option>⏳ Pending</option><option>🔄 Running</option><option>✅ Done</option><option>❌ Failed</option>
+      </select>
+    </h2>
+    <span class="exp-toggle">▼</span>
+  </div>
+  <div class="exp-body">
+
+    <div class="card">
+      <h3>Paper Claims vs Required Evidence</h3>
+      <p style="font-size:0.82rem;color:var(--text-dim);">For each claim, record the experiment that provides evidence, the actual result, and whether it supports the claim. Mark each row as CONFIRMED, WEAKENED, or REFUTED.</p>
+      <table>
+        <tr><th style="width:25%">Claim</th><th style="width:15%">Experiment</th><th style="width:30%">Evidence (fill after results)</th><th style="width:15%">Verdict</th><th style="width:15%">Notes</th></tr>
+        <tr>
+          <td>Global memory provides O(Nd²) complexity, linear in N</td>
+          <td>EXP 3</td>
+          <td contenteditable="true" data-placeholder="Record scaling curve slope..."></td>
+          <td><select class="status-select"><option>—</option><option>✅ Confirmed</option><option>⚠️ Weakened</option><option>❌ Refuted</option></select></td>
+          <td contenteditable="true" data-placeholder="—"></td>
+        </tr>
+        <tr>
+          <td>Salience gating improves memory utilization over uniform weighting</td>
+          <td>EXP 2</td>
+          <td contenteditable="true" data-placeholder="Full vs No-Salience accuracy..."></td>
+          <td><select class="status-select"><option>—</option><option>✅ Confirmed</option><option>⚠️ Weakened</option><option>❌ Refuted</option></select></td>
+          <td contenteditable="true" data-placeholder="—"></td>
+        </tr>
+        <tr>
+          <td>φ gate (1+tanh) restores output rank after global memory bottleneck</td>
+          <td>EXP 7</td>
+          <td contenteditable="true" data-placeholder="Output rank ratio with vs without φ..."></td>
+          <td><select class="status-select"><option>—</option><option>✅ Confirmed</option><option>⚠️ Weakened</option><option>❌ Refuted</option></select></td>
+          <td contenteditable="true" data-placeholder="—"></td>
+        </tr>
+        <tr>
+          <td>Local window + global memory is better than either alone</td>
+          <td>EXP 2</td>
+          <td contenteditable="true" data-placeholder="Full vs Global-only vs Local-only..."></td>
+          <td><select class="status-select"><option>—</option><option>✅ Confirmed</option><option>⚠️ Weakened</option><option>❌ Refuted</option></select></td>
+          <td contenteditable="true" data-placeholder="—"></td>
+        </tr>
+        <tr>
+          <td>Hybrid beats vanilla linear attention on long-context recall</td>
+          <td>EXP 1, 2</td>
+          <td contenteditable="true" data-placeholder="Hybrid vs Linear accuracy at high pairs..."></td>
+          <td><select class="status-select"><option>—</option><option>✅ Confirmed</option><option>⚠️ Weakened</option><option>❌ Refuted</option></select></td>
+          <td contenteditable="true" data-placeholder="—"></td>
+        </tr>
+        <tr>
+          <td>Hybrid matches softmax accuracy with lower compute</td>
+          <td>EXP 2, 3, 5</td>
+          <td contenteditable="true" data-placeholder="Accuracy gap + time savings..."></td>
+          <td><select class="status-select"><option>—</option><option>✅ Confirmed</option><option>⚠️ Weakened</option><option>❌ Refuted</option></select></td>
+          <td contenteditable="true" data-placeholder="—"></td>
+        </tr>
+        <tr>
+          <td>Recurrent mode enables streaming inference without major accuracy loss</td>
+          <td>EXP 4</td>
+          <td contenteditable="true" data-placeholder="Parallel vs recurrent accuracy gap..."></td>
+          <td><select class="status-select"><option>—</option><option>✅ Confirmed</option><option>⚠️ Weakened</option><option>❌ Refuted</option></select></td>
+          <td contenteditable="true" data-placeholder="—"></td>
+        </tr>
+        <tr>
+          <td>Memory capacity scales with h × d² (head count × head dim squared)</td>
+          <td>EXP 1</td>
+          <td contenteditable="true" data-placeholder="Heatmap showing head scaling..."></td>
+          <td><select class="status-select"><option>—</option><option>✅ Confirmed</option><option>⚠️ Weakened</option><option>❌ Refuted</option></select></td>
+          <td contenteditable="true" data-placeholder="—"></td>
+        </tr>
+        <tr>
+          <td>Architecture is modality-agnostic (works on both vision and text)</td>
+          <td>EXP 5, 6</td>
+          <td contenteditable="true" data-placeholder="CIFAR + Shakespeare results..."></td>
+          <td><select class="status-select"><option>—</option><option>✅ Confirmed</option><option>⚠️ Weakened</option><option>❌ Refuted</option></select></td>
+          <td contenteditable="true" data-placeholder="—"></td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Unexpected Findings / Discoveries</h3>
+      <div class="notes" contenteditable="true" style="min-height:150px;" data-placeholder="Record any surprising or unexpected results here. These can be valuable for the paper's discussion section or even a new research direction..."></div>
+    </div>
+
+    <div class="card">
+      <h3>Weaknesses & Limitations to Acknowledge</h3>
+      <div class="notes" contenteditable="true" style="min-height:150px;" data-placeholder="Every honest paper acknowledges limitations. Record them here: scale limitations, missing baselines, known failure modes, assumptions that may not hold..."></div>
+    </div>
+
+    <div class="card">
+      <h3>Future Work Ideas</h3>
+      <div class="notes" contenteditable="true" style="min-height:150px;" data-placeholder="Ideas for extending this work: larger scale experiments, different tasks, architectural variations, theoretical analysis..."></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ FIGURES PLANNING ════════════════ -->
+<div class="experiment" id="figures" style="border-color:var(--cyan);">
+  <div class="exp-header" onclick="toggleExp(this)" style="border-left:3px solid var(--cyan);">
+    <h2><span class="exp-num" style="background:var(--cyan);">FIG</span> Paper Figures — Planning & Drafts</h2>
+    <span class="exp-toggle">▼</span>
+  </div>
+  <div class="exp-body">
+
+    <div class="card">
+      <h3>Figure Inventory</h3>
+      <table>
+        <tr><th>Fig #</th><th>Title</th><th>Type</th><th>Source Exp</th><th>Status</th><th>File Location</th></tr>
+        <tr>
+          <td contenteditable="true">1</td>
+          <td contenteditable="true">Architecture Diagram</td>
+          <td contenteditable="true">Diagram</td>
+          <td>—</td>
+          <td><select class="status-select"><option>⏳ Pending</option><option>📝 Drafted</option><option>✅ Final</option></select></td>
+          <td contenteditable="true" data-placeholder="path/to/file"></td>
+        </tr>
+        <tr>
+          <td contenteditable="true">2</td>
+          <td contenteditable="true">MQAR Capacity Heatmap</td>
+          <td contenteditable="true">Heatmap</td>
+          <td>EXP 1</td>
+          <td><select class="status-select"><option>⏳ Pending</option><option>📝 Drafted</option><option>✅ Final</option></select></td>
+          <td contenteditable="true" data-placeholder="path/to/file"></td>
+        </tr>
+        <tr>
+          <td contenteditable="true">3</td>
+          <td contenteditable="true">Ablation Bar Chart</td>
+          <td contenteditable="true">Grouped Bar</td>
+          <td>EXP 2</td>
+          <td><select class="status-select"><option>⏳ Pending</option><option>📝 Drafted</option><option>✅ Final</option></select></td>
+          <td contenteditable="true" data-placeholder="path/to/file"></td>
+        </tr>
+        <tr>
+          <td contenteditable="true">4</td>
+          <td contenteditable="true">Scaling Curve (Time vs N)</td>
+          <td contenteditable="true">Log-Log Line</td>
+          <td>EXP 3</td>
+          <td><select class="status-select"><option>⏳ Pending</option><option>📝 Drafted</option><option>✅ Final</option></select></td>
+          <td contenteditable="true" data-placeholder="path/to/file"></td>
+        </tr>
+        <tr>
+          <td contenteditable="true">5</td>
+          <td contenteditable="true">Rank Preservation Bars</td>
+          <td contenteditable="true">Grouped Bar</td>
+          <td>EXP 7</td>
+          <td><select class="status-select"><option>⏳ Pending</option><option>📝 Drafted</option><option>✅ Final</option></select></td>
+          <td contenteditable="true" data-placeholder="path/to/file"></td>
+        </tr>
+        <tr>
+          <td contenteditable="true">6</td>
+          <td contenteditable="true" data-placeholder="Add more..."></td>
+          <td contenteditable="true" data-placeholder="—"></td>
+          <td contenteditable="true" data-placeholder="—"></td>
+          <td><select class="status-select"><option>⏳ Pending</option><option>📝 Drafted</option><option>✅ Final</option></select></td>
+          <td contenteditable="true" data-placeholder="path/to/file"></td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Table Inventory</h3>
+      <table>
+        <tr><th>Table #</th><th>Title</th><th>Source Exp</th><th>Status</th><th>Notes</th></tr>
+        <tr>
+          <td>1</td>
+          <td contenteditable="true">Ablation Results (Recall)</td>
+          <td>EXP 2</td>
+          <td><select class="status-select"><option>⏳ Pending</option><option>📝 Drafted</option><option>✅ Final</option></select></td>
+          <td contenteditable="true" data-placeholder="—"></td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td contenteditable="true">Cross-Domain Comparison (CIFAR + Shakespeare)</td>
+          <td>EXP 5, 6</td>
+          <td><select class="status-select"><option>⏳ Pending</option><option>📝 Drafted</option><option>✅ Final</option></select></td>
+          <td contenteditable="true" data-placeholder="—"></td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td contenteditable="true">Parallel vs Recurrent</td>
+          <td>EXP 4</td>
+          <td><select class="status-select"><option>⏳ Pending</option><option>📝 Drafted</option><option>✅ Final</option></select></td>
+          <td contenteditable="true" data-placeholder="—"></td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td contenteditable="true" data-placeholder="Add more..."></td>
+          <td contenteditable="true" data-placeholder="—"></td>
+          <td><select class="status-select"><option>⏳ Pending</option><option>📝 Drafted</option><option>✅ Final</option></select></td>
+          <td contenteditable="true" data-placeholder="—"></td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="notes-label">Figure & Table Notes</div>
+    <div class="notes" contenteditable="true" data-placeholder="Notes on figure styling, color palettes, LaTeX formatting decisions..."></div>
+  </div>
+</div>
+
+<!-- ════════════════ NARRATIVE ════════════════ -->
+<div class="experiment" id="narrative" style="border-color:var(--pink);">
+  <div class="exp-header" onclick="toggleExp(this)" style="border-left:3px solid var(--pink);">
+    <h2><span class="exp-num" style="background:var(--pink);">NAR</span> Paper Narrative — Story Arc Planning</h2>
+    <span class="exp-toggle">▼</span>
+  </div>
+  <div class="exp-body">
+
+    <div class="card">
+      <h3>Abstract Draft</h3>
+      <div class="notes" contenteditable="true" style="min-height:180px;" data-placeholder="Draft your abstract here. Structure: Problem → Approach → Key results → Impact. ~150 words for workshops, ~250 for full papers."></div>
+    </div>
+
+    <div class="card">
+      <h3>Introduction — The Story</h3>
+      <div class="notes" contenteditable="true" style="min-height:180px;" data-placeholder="Paragraph 1: The problem (quadratic bottleneck in attention). Paragraph 2: Existing solutions and their limitations (linear attention loses expressiveness). Paragraph 3: Our approach (hybrid global memory + local window + rank-restoring gate). Paragraph 4: Summary of contributions."></div>
+    </div>
+
+    <div class="card">
+      <h3>Contributions List</h3>
+      <div class="notes" contenteditable="true" style="min-height:120px;" data-placeholder="1. We propose a hybrid attention mechanism combining salience-gated global associative memory with local windowed softmax attention...
+2. We introduce a residual output gate φ(x) = 1 + tanh(Wx + b) that provably restores output rank...
+3. We demonstrate competitive performance with softmax attention at O(Nd²) complexity...
+4. ..."></div>
+    </div>
+
+    <div class="card">
+      <h3>Related Work Positioning</h3>
+      <div class="notes" contenteditable="true" style="min-height:150px;" data-placeholder="How does this relate to: Linear Transformers (Katharopoulos et al.), Performers (Choromanski et al.), Mamba/S4 (Gu et al.), RetNet (Sun et al.), GLA (Yang et al.), RWKV (Peng et al.)? What's different about our approach?"></div>
+    </div>
+
+    <div class="card">
+      <h3>Results Section Outline</h3>
+      <div class="notes" contenteditable="true" style="min-height:150px;" data-placeholder="Section 4.1: Experimental Setup (architecture, hyperparameters, hardware)
+Section 4.2: Associative Recall Capacity (EXP 1 heatmap + EXP 2 ablation)
+Section 4.3: Scaling Analysis (EXP 3 curves)
+Section 4.4: Rank Preservation Analysis (EXP 7 bars)
+Section 4.5: Cross-Domain Validation (EXP 5 CIFAR + EXP 6 Shakespeare)
+Section 4.6: Streaming Inference (EXP 4 parallel vs recurrent)"></div>
+    </div>
+
+    <div class="card">
+      <h3>Discussion Points</h3>
+      <div class="notes" contenteditable="true" style="min-height:150px;" data-placeholder="What do the results mean? What are the implications? What surprised you? What limitations exist? What would you do differently with more compute?"></div>
+    </div>
+
+    <div class="card">
+      <h3>Timeline & Milestones</h3>
+      <table>
+        <tr><th>Date</th><th>Milestone</th><th>Status</th><th>Notes</th></tr>
+        <tr><td contenteditable="true" data-placeholder="YYYY-MM-DD"></td><td contenteditable="true">Run all EXP 1 (MQAR sweep)</td><td><select class="status-select"><option>⏳</option><option>🔄</option><option>✅</option></select></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td contenteditable="true" data-placeholder="YYYY-MM-DD"></td><td contenteditable="true">Run all EXP 2 (ablation matrix)</td><td><select class="status-select"><option>⏳</option><option>🔄</option><option>✅</option></select></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td contenteditable="true" data-placeholder="YYYY-MM-DD"></td><td contenteditable="true">Run EXP 3-8 (supporting experiments)</td><td><select class="status-select"><option>⏳</option><option>🔄</option><option>✅</option></select></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td contenteditable="true" data-placeholder="YYYY-MM-DD"></td><td contenteditable="true">Generate all figures</td><td><select class="status-select"><option>⏳</option><option>🔄</option><option>✅</option></select></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td contenteditable="true" data-placeholder="YYYY-MM-DD"></td><td contenteditable="true">Complete paper draft</td><td><select class="status-select"><option>⏳</option><option>🔄</option><option>✅</option></select></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td contenteditable="true" data-placeholder="YYYY-MM-DD"></td><td contenteditable="true">Submit to professor for review</td><td><select class="status-select"><option>⏳</option><option>🔄</option><option>✅</option></select></td><td contenteditable="true" data-placeholder="—"></td></tr>
+        <tr><td contenteditable="true" data-placeholder="YYYY-MM-DD"></td><td contenteditable="true" data-placeholder="Add more..."></td><td><select class="status-select"><option>⏳</option><option>🔄</option><option>✅</option></select></td><td contenteditable="true" data-placeholder="—"></td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ MASTER LOG ════════════════ -->
+<div class="card" style="border-left:3px solid var(--green);margin-top:2rem;">
+  <h3>📋 Master Experiment Log</h3>
+  <p style="font-size:0.78rem;color:var(--text-dim);">Chronological log of every run. Add a row for each experiment you execute.</p>
+  <table>
+    <tr><th>Date</th><th>Exp #</th><th>Config Summary</th><th>Seed</th><th>Key Result</th><th>Notes / Anomalies</th></tr>
+    <tr><td contenteditable="true" data-placeholder="YYYY-MM-DD"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+    <tr><td contenteditable="true" data-placeholder="YYYY-MM-DD"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+    <tr><td contenteditable="true" data-placeholder="YYYY-MM-DD"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+    <tr><td contenteditable="true" data-placeholder="YYYY-MM-DD"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+    <tr><td contenteditable="true" data-placeholder="YYYY-MM-DD"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+    <tr><td contenteditable="true" data-placeholder="YYYY-MM-DD"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+    <tr><td contenteditable="true" data-placeholder="YYYY-MM-DD"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+    <tr><td contenteditable="true" data-placeholder="YYYY-MM-DD"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+    <tr><td contenteditable="true" data-placeholder="YYYY-MM-DD"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+    <tr><td contenteditable="true" data-placeholder="YYYY-MM-DD"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+    <tr><td contenteditable="true" data-placeholder="YYYY-MM-DD"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+    <tr><td contenteditable="true" data-placeholder="YYYY-MM-DD"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+    <tr><td contenteditable="true" data-placeholder="YYYY-MM-DD"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+    <tr><td contenteditable="true" data-placeholder="YYYY-MM-DD"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+    <tr><td contenteditable="true" data-placeholder="YYYY-MM-DD"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td><td contenteditable="true" data-placeholder="—"></td></tr>
+  </table>
+</div>
+
+</div><!-- /container -->
+
+
+<!-- ════════════════ RESEARCH JOURNAL ════════════════ -->
+<style>
+/* ── Journal styles ── */
+.journal-wrap{background:var(--surface);border:1px solid var(--border);border-radius:16px;margin-top:2rem;overflow:hidden;}
+.journal-topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;background:linear-gradient(135deg,#0f172a,#1e1b4b);border-bottom:1px solid var(--border);}
+.journal-topbar h2{font-size:1.1rem;font-weight:800;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.journal-actions{display:flex;gap:0.6rem;}
+.btn-add-tab{display:flex;align-items:center;gap:0.4rem;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:0.45rem 1rem;font-size:0.82rem;font-weight:700;cursor:pointer;transition:background 0.2s;}
+.btn-add-tab:hover{background:#2563eb;}
+.btn-save-doc{display:flex;align-items:center;gap:0.4rem;background:var(--green);color:#fff;border:none;border-radius:8px;padding:0.45rem 1rem;font-size:0.82rem;font-weight:700;cursor:pointer;transition:background 0.2s;}
+.btn-save-doc:hover{background:#059669;}
+/* Tab bar */
+.journal-tabbar{display:flex;align-items:center;gap:0;overflow-x:auto;background:var(--bg);border-bottom:1px solid var(--border);scrollbar-width:none;}
+.journal-tabbar::-webkit-scrollbar{display:none;}
+.j-tab{display:flex;align-items:center;gap:0.5rem;padding:0.6rem 1.1rem;border-right:1px solid var(--border);cursor:pointer;font-size:0.8rem;font-weight:600;color:var(--text-dim);white-space:nowrap;transition:all 0.2s;min-width:120px;max-width:200px;position:relative;}
+.j-tab:hover{background:var(--card);color:var(--text);}
+.j-tab.active{background:var(--surface);color:var(--accent);border-bottom:2px solid var(--accent);}
+.j-tab-label{outline:none;border:none;background:transparent;color:inherit;font:inherit;cursor:pointer;max-width:140px;overflow:hidden;text-overflow:ellipsis;}
+.j-tab.active .j-tab-label{cursor:text;color:var(--accent);}
+.j-tab-close{font-size:0.9rem;color:var(--text-dim);background:none;border:none;cursor:pointer;padding:0 2px;line-height:1;opacity:0;transition:opacity 0.2s;}
+.j-tab:hover .j-tab-close{opacity:1;}
+/* Page content */
+.journal-pages{padding:1.5rem;}
+.j-page{display:none;}
+.j-page.active{display:block;}
+.j-page-meta{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;margin-bottom:1.2rem;padding-bottom:1rem;border-bottom:1px solid var(--border);}
+.j-page-heading{font-size:1.4rem;font-weight:800;color:var(--text-bright);background:transparent;border:none;outline:none;flex:1;min-width:200px;font-family:'Inter',sans-serif;}
+.j-page-heading:focus{border-bottom:1px solid var(--accent);}
+.j-date-wrap{display:flex;align-items:center;gap:0.5rem;font-size:0.78rem;color:var(--text-dim);}
+.j-date-wrap label{font-weight:600;text-transform:uppercase;letter-spacing:0.06em;}
+.j-date{background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:0.3rem 0.6rem;font-size:0.78rem;font-family:'JetBrains Mono';}
+.j-date:focus{outline:none;border-color:var(--accent);}
+/* Sections inside a page */
+.j-section-bar{display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;}
+.j-add-section{background:var(--card);border:1px dashed var(--border-light);color:var(--text-dim);border-radius:8px;padding:0.3rem 0.75rem;font-size:0.75rem;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.j-add-section:hover{border-color:var(--accent);color:var(--accent);}
+.j-section{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem 1.2rem;margin-bottom:1rem;position:relative;}
+.j-section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;}
+.j-section-title{font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--accent);background:transparent;border:none;outline:none;font-family:'Inter',sans-serif;}
+.j-section-del{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1rem;opacity:0.5;transition:opacity 0.2s;}
+.j-section-del:hover{opacity:1;color:var(--red);}
+.j-editor{width:100%;min-height:120px;background:var(--bg);border:1px dashed var(--border-light);border-radius:6px;padding:0.75rem;font-size:0.85rem;color:var(--text);line-height:1.7;font-family:'Inter',sans-serif;resize:vertical;outline:none;}
+.j-editor:focus{border-color:var(--accent);}
+.j-editor[data-type="code"]{font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:#a5f3fc;}
+.j-editor:empty::before{content:attr(data-placeholder);color:var(--text-dim);opacity:0.5;font-style:italic;}
+/* Empty state */
+.j-empty{text-align:center;padding:3rem 1rem;color:var(--text-dim);}
+.j-empty p{font-size:0.9rem;margin-top:0.5rem;}
+</style>
+
+<div class="journal-wrap" id="researchJournal">
+  <div class="journal-topbar">
+    <h2>📓 Research Journal</h2>
+    <div class="journal-actions">
+      <button class="btn-add-tab" onclick="journalAddTab()">＋ Add Page</button>
+      <button class="btn-save-doc" onclick="saveDocumentVersion()">💾 Save Version</button>
+    </div>
+  </div>
+  <div class="journal-tabbar" id="journalTabBar">
+    <!-- tabs injected here -->
+  </div>
+  <div class="journal-pages" id="journalPages">
+    <div class="j-empty" id="journalEmpty">
+      <div style="font-size:2.5rem;">📄</div>
+      <p>No pages yet. Click <strong>+ Add Page</strong> to create your first research journal entry.</p>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+/* ─────────────────────────────────────────────
+   ORIGINAL FUNCTIONALITY
+───────────────────────────────────────────── */
+function toggleExp(header) {
+  header.parentElement.classList.toggle('open');
+}
+
+let isDirty = false;
+document.addEventListener('input', function(e) {
+  if (e.target.hasAttribute('contenteditable') || e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') isDirty = true;
+});
+document.addEventListener('change', function(e) {
+  if (e.target.tagName === 'SELECT') isDirty = true;
+});
+window.addEventListener('beforeunload', function(e) {
+  if (isDirty) { e.preventDefault(); e.returnValue = ''; }
+});
+
+/* ─────────────────────────────────────────────
+   RESEARCH JOURNAL ENGINE
+───────────────────────────────────────────── */
+let journalTabCount = 0;
+let journalActiveTab = null;
+
+function journalAddTab(title, dateVal, sections) {
+  journalTabCount++;
+  const id = 'jpage-' + journalTabCount;
+  const tabBar  = document.getElementById('journalTabBar');
+  const pages   = document.getElementById('journalPages');
+  const empty   = document.getElementById('journalEmpty');
+  if (empty) empty.style.display = 'none';
+
+  /* ── Tab pill ── */
+  const tab = document.createElement('div');
+  tab.className = 'j-tab';
+  tab.dataset.target = id;
+  tab.innerHTML = `
+    <span class="j-tab-label" contenteditable="false" spellcheck="false">${title || 'Page ' + journalTabCount}</span>
+    <button class="j-tab-close" title="Delete page" onclick="journalDeleteTab(event,'${id}')">✕</button>`;
+  tab.querySelector('.j-tab-label').addEventListener('dblclick', function(){ this.contentEditable='true'; this.focus(); });
+  tab.querySelector('.j-tab-label').addEventListener('blur', function(){ this.contentEditable='false'; isDirty=true; });
+  tab.querySelector('.j-tab-label').addEventListener('input', function(){ isDirty=true; });
+  tab.addEventListener('click', function(e){ if(e.target.classList.contains('j-tab-close')) return; journalActivate(id); });
+  tabBar.appendChild(tab);
+
+  /* ── Page panel ── */
+  const today = dateVal || new Date().toISOString().slice(0,10);
+  const page = document.createElement('div');
+  page.className = 'j-page';
+  page.id = id;
+  page.innerHTML = `
+    <div class="j-page-meta">
+      <input class="j-page-heading" type="text" value="${title || 'Untitled Page'}" placeholder="Page Heading..." oninput="journalSyncTabLabel('${id}',this.value);isDirty=true;">
+      <div class="j-date-wrap"><label>Date</label><input class="j-date" type="date" value="${today}" oninput="isDirty=true;"></div>
+    </div>
+    <div class="j-section-bar">
+      <button class="j-add-section" onclick="journalAddSection('${id}','notes')">＋ Notes Block</button>
+      <button class="j-add-section" onclick="journalAddSection('${id}','results')">＋ Results Block</button>
+      <button class="j-add-section" onclick="journalAddSection('${id}','specs')">＋ Specs Block</button>
+      <button class="j-add-section" onclick="journalAddSection('${id}','code')">＋ Code Block</button>
+      <button class="j-add-section" onclick="journalAddSection('${id}','observations')">＋ Observations Block</button>
+    </div>
+    <div class="j-sections" id="secs-${id}"></div>`;
+  pages.appendChild(page);
+
+  /* restore saved sections if any */
+  if (sections && sections.length) {
+    sections.forEach(s => journalAddSection(id, s.type, s.title, s.content));
+  }
+
+  journalActivate(id);
+  isDirty = true;
+}
+
+function journalActivate(id) {
+  document.querySelectorAll('.j-tab').forEach(t => t.classList.toggle('active', t.dataset.target===id));
+  document.querySelectorAll('.j-page').forEach(p => p.classList.toggle('active', p.id===id));
+  journalActiveTab = id;
+}
+
+function journalSyncTabLabel(id, val) {
+  const tab = document.querySelector(`.j-tab[data-target="${id}"] .j-tab-label`);
+  if (tab) tab.textContent = val || 'Untitled';
+}
+
+function journalDeleteTab(e, id) {
+  e.stopPropagation();
+  if (!confirm('Delete this journal page?')) return;
+  document.querySelector(`.j-tab[data-target="${id}"]`).remove();
+  document.getElementById(id).remove();
+  const remaining = document.querySelectorAll('.j-page');
+  if (remaining.length > 0) journalActivate(remaining[remaining.length-1].id);
+  else { document.getElementById('journalEmpty').style.display=''; journalActiveTab=null; }
+  isDirty = true;
+}
+
+const SECTION_LABELS = {
+  notes:        { label:'📝 Notes',        color:'var(--accent)',  ph:'Write your notes here...' },
+  results:      { label:'📊 Results',       color:'var(--green)',   ph:'Paste or type experimental output, metrics, loss values...' },
+  specs:        { label:'⚙️ Specifications', color:'var(--amber)',   ph:'Model dim, heads, layers, LR, batch size, device, epochs...' },
+  code:         { label:'💻 Code / Output', color:'var(--cyan)',    ph:'Paste terminal output, code snippets, error traces...' },
+  observations: { label:'🔬 Observations',  color:'var(--purple)',  ph:'What did you notice? Unexpected patterns, anomalies...' },
+};
+
+function journalAddSection(pageId, type, customTitle, content) {
+  const container = document.getElementById('secs-' + pageId);
+  if (!container) return;
+  const cfg = SECTION_LABELS[type] || SECTION_LABELS['notes'];
+  const sec = document.createElement('div');
+  sec.className = 'j-section';
+  sec.dataset.type = type;
+  const titleText = customTitle || cfg.label;
+  sec.innerHTML = `
+    <div class="j-section-head">
+      <input class="j-section-title" type="text" value="${titleText}" style="color:${cfg.color}" oninput="isDirty=true;">
+      <button class="j-section-del" onclick="this.closest('.j-section').remove();isDirty=true;" title="Remove block">🗑</button>
+    </div>
+    <div class="j-editor${type==='code'?' ':''}${type==='code'?'j-editor-code':''}" contenteditable="true" data-type="${type}" data-placeholder="${cfg.ph}" spellcheck="${type==='code'?'false':'true'}" oninput="isDirty=true;">${content||''}</div>`;
+  if (type === 'code') sec.querySelector('.j-editor').style.fontFamily = "'JetBrains Mono',monospace";
+  container.appendChild(sec);
+  sec.querySelector('.j-editor').focus();
+  isDirty = true;
+}
+
+/* ─────────────────────────────────────────────
+   SAVE ENTIRE DOCUMENT AS HTML FILE
+───────────────────────────────────────────── */
+function saveDocumentVersion() {
+  const now   = new Date();
+  // Always use the same filename so the browser prompts to replace the existing file
+  const filename = 'experiment_worksheet.html';
+
+  /* Clone the whole document, stamp the version in the header */
+  const clone = document.documentElement.cloneNode(true);
+  const versionEl = clone.querySelector('#docVersionStamp');
+  if (versionEl) versionEl.textContent = 'Saved: ' + now.toLocaleString();
+
+  const blob = new Blob(['<!DOCTYPE html>\n' + clone.outerHTML], {type: 'text/html'});
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  isDirty = false;
+  
+  alert('✅ Save initiated!\n\nIf your browser asks, choose to REPLACE the existing file to update it.');
+}
+
+/* ── Init ── */
+document.addEventListener('DOMContentLoaded', function() {
+  const exps = document.querySelectorAll('.experiment');
+  if (exps.length) exps[0].classList.add('open');
+});
+</script>
+
+</body>
+</html>
+
