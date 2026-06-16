@@ -19,6 +19,7 @@ from .metrics import (
     AttentionStats,
     accuracy,
     aggregate_stats_batches,
+    compute_deferred_stats,
     merge_layer_stats,
     timed,
 )
@@ -242,16 +243,25 @@ def _evaluate(
         # Fix #2: collect stats on multiple batches, not just the first
         should_collect = collect_stats and batch_index < stats_batches
 
-        with timed() as timer:
-            logits, stats_list = model(
-                images,
-                collect_stats=should_collect,
-                rank_tol=rank_tol,
-            )
-
-        # Fix #3: time only the first non-warmup pass
-        if batch_index == 0:
+        # ── Pure inference timing ──────────────────────────────────
+        # Time a CLEAN forward pass (no stats) so inference_ms reflects
+        # only model execution speed, not SVD diagnostic overhead.
+        if batch_index == 0 and collect_stats:
+            # Dedicated timing pass: no stats collection.
+            if images.is_cuda:
+                torch.cuda.synchronize()
+            with timed() as timer:
+                model(images, collect_stats=False)
+                if images.is_cuda:
+                    torch.cuda.synchronize()
             inference_ms = timer.elapsed_ms
+
+        # ── Normal forward pass (with optional stats stashing) ─────
+        logits, stats_list = model(
+            images,
+            collect_stats=should_collect,
+            rank_tol=rank_tol,
+        )
 
         loss = F.cross_entropy(logits, labels)
         batch = labels.numel()
@@ -261,6 +271,9 @@ def _evaluate(
 
         # Fix #1: keep per-layer stats from each collected batch
         if should_collect and stats_list:
+            # Compute deferred SVD ranks OUTSIDE the timer.
+            for s in stats_list:
+                compute_deferred_stats(s, rank_tol=rank_tol)
             tagged = merge_layer_stats(stats_list)
             all_batch_stats.append(tagged)
 
@@ -438,13 +451,22 @@ def _evaluate_text(
 
         should_collect = collect_stats and batch_index < stats_batches
 
-        with timed() as timer:
-            logits, stats_list = model(
-                inputs, collect_stats=should_collect, rank_tol=rank_tol
-            )
-
-        if batch_index == 0:
+        # ── Pure inference timing ──────────────────────────────────
+        # Time a CLEAN forward pass (no stats) so inference_ms reflects
+        # only model execution speed, not SVD diagnostic overhead.
+        if batch_index == 0 and collect_stats:
+            if inputs.is_cuda:
+                torch.cuda.synchronize()
+            with timed() as timer:
+                model(inputs, collect_stats=False)
+                if inputs.is_cuda:
+                    torch.cuda.synchronize()
             inference_ms = timer.elapsed_ms
+
+        # ── Normal forward pass (with optional stats stashing) ─────
+        logits, stats_list = model(
+            inputs, collect_stats=should_collect, rank_tol=rank_tol
+        )
 
         if is_lm:
             loss = F.cross_entropy(
@@ -462,6 +484,9 @@ def _evaluate_text(
         total_loss += loss.item() * inputs.size(0)
 
         if should_collect and stats_list:
+            # Compute deferred SVD ranks OUTSIDE the timer.
+            for s in stats_list:
+                compute_deferred_stats(s, rank_tol=rank_tol)
             tagged = merge_layer_stats(stats_list)
             all_batch_stats.append(tagged)
 

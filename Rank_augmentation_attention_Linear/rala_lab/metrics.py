@@ -23,6 +23,10 @@ class AttentionStats:
     alpha_sum_mean: float | None = None
     min_denominator: float | None = None
     warnings: list[str] = field(default_factory=list)
+    # Raw tensors stashed during forward pass for deferred SVD computation.
+    # These are NOT serialised — they exist only in memory between the forward
+    # pass and the post-timer stats computation step.
+    _raw_tensors: dict[str, torch.Tensor] = field(default_factory=dict, repr=False)
 
     def __init__(
         self,
@@ -38,6 +42,7 @@ class AttentionStats:
         warnings: list[str] | None = None,
         kv_rank: float | None = None,
         kv_rank_ratio: float | None = None,
+        _raw_tensors: dict[str, torch.Tensor] | None = None,
     ) -> None:
         self.layer = layer
         self.memory_rank = memory_rank if memory_rank is not None else kv_rank
@@ -49,6 +54,7 @@ class AttentionStats:
         self.alpha_sum_mean = alpha_sum_mean
         self.min_denominator = min_denominator
         self.warnings = warnings or []
+        self._raw_tensors = _raw_tensors or {}
 
     @property
     def kv_rank(self) -> float | None:
@@ -104,6 +110,45 @@ def rank_ratio(x: torch.Tensor, tol: float = DEFAULT_RANK_TOL) -> tuple[float, f
     rank = average_matrix_rank(x, tol=tol)
     full_rank = min(x.shape[-2], x.shape[-1]) if x.ndim >= 2 else 1
     return rank, rank / max(float(full_rank), 1.0)
+
+
+def compute_deferred_stats(
+    stats: AttentionStats,
+    rank_tol: float = DEFAULT_RANK_TOL,
+) -> None:
+    """Compute SVD rank metrics from raw tensors stashed during forward().
+
+    This function is designed to be called AFTER the inference timer has
+    stopped, so that the expensive SVD computation does not pollute the
+    reported inference_ms.
+
+    After computation, _raw_tensors is cleared to free GPU memory.
+    """
+    raw = stats._raw_tensors
+    if not raw:
+        return
+
+    with torch.no_grad():
+        if "memory" in raw:
+            memory_rank, memory_ratio = rank_ratio(raw["memory"], tol=rank_tol)
+            stats.memory_rank = memory_rank
+            stats.memory_rank_ratio = memory_ratio
+
+        if "o_global" in raw:
+            global_rank, global_ratio = rank_ratio(raw["o_global"], tol=rank_tol)
+            stats.global_output_rank = global_rank
+            stats.global_output_rank_ratio = global_ratio
+
+        if "output" in raw:
+            output_rank, output_ratio = rank_ratio(raw["output"], tol=rank_tol)
+            stats.output_rank = output_rank
+            stats.output_rank_ratio = output_ratio
+
+        if "stability_tensors" in raw:
+            stats.warnings = stability_warnings(raw["stability_tensors"])
+
+    # Free GPU memory — raw tensors are no longer needed.
+    stats._raw_tensors = {}
 
 
 def merge_layer_stats(stats_list: list[AttentionStats]) -> list[AttentionStats]:
